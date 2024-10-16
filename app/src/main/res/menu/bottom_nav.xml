@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:title="Workout"
+        android:id="@+id/workout"
+        android:icon="@drawable/dumbbell_svgrepo_com"
+        />
+    <item android:title="Nutrition"
+        android:id="@+id/nutrition"
+        android:icon="@drawable/utensils_solid"
+        />
+    <item android:title="Sleep"
+        android:id="@+id/sleep"
+        android:icon="@drawable/zzz_svgrepo_com"
+        />
+</menu>

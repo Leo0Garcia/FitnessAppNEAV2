@@ -89,25 +89,47 @@ class AddWorkout : Fragment() {
     private fun addExerciseRow() {
         val exerciseLayout = LayoutInflater.from(context).inflate(R.layout.exercise_row, null)
         val exerciseEditText = exerciseLayout.findViewById<EditText>(R.id.exercise_name)
+        val setsEditText = exerciseLayout.findViewById<EditText>(R.id.sets_input)
+        val repsEditText = exerciseLayout.findViewById<EditText>(R.id.reps_input)
 
-        exercises.add(Exercise("", 0, 0))
-        println("Here")
+        exercises.add(Exercise("", 0, 0)) // Placeholder entry
 
         exerciseContainer.addView(exerciseLayout)
 
+        // Add TextWatchers to update exercise data
         exerciseEditText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-                // Not needed
-            }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val index = exerciseContainer.indexOfChild(exerciseLayout)
-                exercises[index] = Exercise(s.toString(), 0, 0) // Update the exercise name
+                exercises[index] = exercises[index].copy(name = s.toString())
             }
 
-            override fun afterTextChanged(s: Editable?) {
-                // Not needed
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        setsEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val index = exerciseContainer.indexOfChild(exerciseLayout)
+                val sets = s.toString().toIntOrNull() ?: 0 // default to 0
+                exercises[index] = exercises[index].copy(sets = sets)
             }
+
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        repsEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val index = exerciseContainer.indexOfChild(exerciseLayout)
+                val reps = s.toString().toIntOrNull() ?: 0
+                exercises[index] = exercises[index].copy(reps = reps)
+            }
+
+            override fun afterTextChanged(s: Editable?) {}
         })
     }
 
@@ -115,46 +137,32 @@ class AddWorkout : Fragment() {
         val workoutName = workoutNameEditText.text.toString()
         val formatter = SimpleDateFormat("dd/MM/yyyy HH:mm")
         val workoutDate = formatter.format(Calendar.getInstance().time)
-        val duration = null
-        val notes = "null"
 
-        val dbHelper = DatabaseHelper(requireContext(), null)
-
-        val db = dbHelper.writableDatabase
+        val db = databaseHelper.writableDatabase
         db.beginTransaction()
-
-        //println(db.execSQL("SELECT * FROM Workouts"))
 
         try {
             // Insert the workout
-            val workoutQuery = "INSERT INTO Workouts (WorkoutName, WorkoutDate, Duration, Notes) VALUES (?,?,?,?);".trimIndent()
+            val workoutQuery = "INSERT INTO Workout (workoutName) VALUES (?);"
             val workoutStatement = db.compileStatement(workoutQuery)
             workoutStatement.bindString(1, workoutName)
-            workoutStatement.bindString(2, workoutDate)
-            workoutStatement.bindNull(3)
-            workoutStatement.bindString(4, notes)
-
             val workoutID = workoutStatement.executeInsert()
 
             // Insert each exercise
             for (exercise in exercises) {
-                val exerciseQuery = "INSERT INTO Exercises (WorkoutID, ExerciseName, Sets, Reps, Weight, Duration, Notes) VALUES (?,?,?,?,?,?,?)".trimIndent()
+                val exerciseQuery = "INSERT INTO Exercise (workoutId, exerciseName, sets, reps) VALUES (?,?,?,?)"
                 val exerciseStatement = db.compileStatement(exerciseQuery)
                 exerciseStatement.bindLong(1, workoutID)
                 exerciseStatement.bindString(2, exercise.name)
                 exerciseStatement.bindLong(3, exercise.sets.toLong())
                 exerciseStatement.bindLong(4, exercise.reps.toLong())
-                exerciseStatement.bindDouble(5, 0.0)
-                exerciseStatement.bindLong(6, 0)
-                exerciseStatement.bindString(7, "null")
 
                 exerciseStatement.executeInsert()
             }
 
             db.setTransactionSuccessful()
 
-            Toast.makeText(requireContext(), "Workout saved Successfully!", Toast.LENGTH_SHORT).show()
-
+            Toast.makeText(requireContext(), "Workout saved successfully!", Toast.LENGTH_SHORT).show()
             parentFragmentManager.popBackStack()
         } catch (e: Exception) {
             e.printStackTrace()
@@ -162,8 +170,6 @@ class AddWorkout : Fragment() {
             db.endTransaction()
             db.close()
         }
-        println("MAN DID DAT TING")
-
     }
 
     companion object {

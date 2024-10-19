@@ -4,6 +4,15 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
+
+
+data class Workout(
+    val workoutId: Int,
+    val workoutName: String,
+    val notes: String,
+    val createdAt: String
+)
+
 class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
     SQLiteOpenHelper(context, DATABASE_NAME, factory, DATABASE_VERSION) {
 
@@ -75,5 +84,23 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         db?.execSQL("DROP TABLE IF EXISTS CompletedWorkout")
         db?.execSQL("DROP TABLE IF EXISTS CompletedExercise")
         onCreate(db);
+    }
+
+    fun getAllWorkouts(): List<Workout> {
+        val workouts = mutableListOf<Workout>()
+        val db = this.readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM Workout", null)
+        while (cursor.moveToNext()) {
+            var workout: Workout = Workout(
+                cursor.getInt(cursor.getColumnIndexOrThrow("workoutId")), // Throw an error if the column doesn't exist
+                cursor.getString(cursor.getColumnIndexOrThrow("workoutName"))?: "ERROR: WORKOUT NAME NULL",
+                cursor.getString(cursor.getColumnIndexOrThrow("notes"))?: "",
+                cursor.getString(cursor.getColumnIndexOrThrow("createdAt"))?: ""
+            )
+            workouts.add(workout)
+        }
+
+        cursor.close()
+        return workouts
     }
 }

@@ -17,7 +17,6 @@ import android.widget.Toast
 import com.example.fitnessappnea.database.DatabaseHelper
 import java.text.SimpleDateFormat
 
-// TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
 private const val ARG_PARAM1 = "param1"
 private const val ARG_PARAM2 = "param2"
@@ -27,19 +26,13 @@ data class Exercise(
     val sets: Int,
     val reps: Int
 )
-data class WorkoutContainer(
-    val name: String,
-    val exercises: List<Exercise>
-)
+//data class WorkoutContainer(
+//    val name: String,
+//    val exercises: List<Exercise>
+//)
 
 
-/**
- * A simple [Fragment] subclass.
- * Use the [AddWorkout.newInstance] factory method to
- * create an instance of this fragment.
- */
 class AddWorkout : Fragment() {
-    // TODO: Rename and change types of parameters
     private lateinit var exerciseContainer: LinearLayout
     private lateinit var workoutNameEditText: EditText
     private val exercises = mutableListOf<Exercise>()

@@ -1,7 +1,6 @@
 package com.example.fitnessappnea
 
 import android.os.Bundle
-import android.view.Gravity
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.MenuItem
@@ -10,7 +9,6 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
-import android.widget.Toast
 import com.example.fitnessappnea.database.DatabaseHelper
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
@@ -32,7 +30,7 @@ class Workout : Fragment() {
 
         val workoutListLayout: LinearLayout = view.findViewById(R.id.workout_list)
 
-        fetchAllWorkouts(view)
+        fetchAllCompletedWorkouts(view)
 
         val addStartButton: FloatingActionButton = view.findViewById(R.id.addStartWorkout)
         addStartButton.setOnClickListener {
@@ -58,7 +56,12 @@ class Workout : Fragment() {
                     true
                 }
                 R.id.menu_start_workout -> {
-                    println("Start Workout")
+                    // Go to StartWorkout frag
+                    val fragment = SelectWorkout()
+                    val transaction = parentFragmentManager.beginTransaction()
+                    transaction.replace(R.id.frame_layout, fragment)
+                    transaction.addToBackStack(null)
+                    transaction.commit()
                     true
                 }
                 else -> false
@@ -68,7 +71,7 @@ class Workout : Fragment() {
         popupMenu.show()
     }
 
-    private fun fetchAllWorkouts(view: View) {
+    private fun fetchAllCompletedWorkouts(view: View) {
         val databaseHelper = DatabaseHelper(requireContext(), null)
         val db = databaseHelper.readableDatabase
         val cursor = db.rawQuery("SELECT workoutID, completionDate, totalTime FROM CompletedWorkout", null)

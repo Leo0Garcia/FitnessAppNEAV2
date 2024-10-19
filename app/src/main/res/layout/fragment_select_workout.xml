@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SelectWorkout">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <Button
+            android:id="@+id/back_to_workout_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Workouts"
+            android:drawableLeft="@drawable/baseline_arrow_back_24"
+            android:drawableTint="@color/colorAccent"
+            android:padding="8dp"
+            android:drawablePadding="8dp"
+            android:textColor="@color/colorAccent"
+            android:background="?android:attr/selectableItemBackground"
+            android:contentDescription="Go back to workout page" />
+
+
+
+
+        <LinearLayout
+            android:id="@+id/exercise_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+
+
+    </LinearLayout>
+
+</FrameLayout>

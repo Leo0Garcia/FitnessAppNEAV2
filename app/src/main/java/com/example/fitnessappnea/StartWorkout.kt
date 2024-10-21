@@ -5,6 +5,8 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.example.fitnessappnea.database.DatabaseHelper
+import com.example.fitnessappnea.database.Exercise
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 // TODO: Rename parameter arguments, choose names that match
@@ -14,6 +16,8 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class StartWorkout : Fragment() {
 
+    private lateinit var exercises: List<Exercise>
+    private lateinit var databaseHelper: DatabaseHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,11 +28,14 @@ class StartWorkout : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
 
-        val workoutId = arguments?.getInt("workoutId")
+        val workoutId = arguments?.getInt("workoutId") ?: 0 // Just incase value is empty or null set to 0
         println("workoutId: $workoutId")
 
-        val bottomNavigationView = activity?.findViewById<BottomNavigationView>(R.id.bottomNavigationView)
-        bottomNavigationView?.visibility = View.GONE
+        databaseHelper = DatabaseHelper(requireContext(), null)
+
+        // Get the exercises needed to be completed
+        exercises = databaseHelper.getWorkoutExercises(workoutId)
+        println("exercises: $exercises")
 
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_start_workout, container, false)

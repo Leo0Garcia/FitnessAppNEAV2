@@ -21,7 +21,7 @@ import java.text.SimpleDateFormat
 private const val ARG_PARAM1 = "param1"
 private const val ARG_PARAM2 = "param2"
 
-data class Exercise(
+private data class Exercise(
     val name: String,
     val sets: Int,
     val reps: Int

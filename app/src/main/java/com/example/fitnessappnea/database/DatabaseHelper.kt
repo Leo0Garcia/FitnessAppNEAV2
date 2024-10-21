@@ -13,6 +13,15 @@ data class Workout(
     val createdAt: String
 )
 
+data class Exercise(
+    val exerciseId: Int,
+    val workoutId: Int,
+    val exerciseName: String,
+    val sets: Int,
+    val reps: Int,
+    val weight: Double
+)
+
 class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
     SQLiteOpenHelper(context, DATABASE_NAME, factory, DATABASE_VERSION) {
 
@@ -103,4 +112,26 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         cursor.close()
         return workouts
     }
+
+    fun getWorkoutExercises(workoutId: Int): List<Exercise> {
+        val exercises = mutableListOf<Exercise>()
+        val db = this.readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM Exercise WHERE workoutId = ?", null)
+        while (cursor.moveToNext()) {
+            var exercise: Exercise = Exercise(
+                cursor.getInt(cursor.getColumnIndexOrThrow("exerciseId")), // Throw an error if the column doesn't exist
+                cursor.getInt(cursor.getColumnIndexOrThrow("workoutId")),
+                cursor.getString(cursor.getColumnIndexOrThrow("exerciseName")),
+                cursor.getInt(cursor.getColumnIndexOrThrow("sets")),
+                cursor.getInt(cursor.getColumnIndexOrThrow("reps")),
+                cursor.getDouble(cursor.getColumnIndexOrThrow("weight"))
+            )
+
+            exercises.add(exercise)
+        }
+        cursor.close()
+        return exercises
+    }
+
+
 }

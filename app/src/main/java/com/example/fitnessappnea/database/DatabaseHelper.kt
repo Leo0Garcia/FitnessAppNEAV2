@@ -3,7 +3,7 @@ package com.example.fitnessappnea.database
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-
+import android.database.sqlite.SQLiteQuery
 
 
 data class Workout(
@@ -116,7 +116,7 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
     fun getWorkoutExercises(workoutId: Int): List<Exercise> {
         val exercises = mutableListOf<Exercise>()
         val db = this.readableDatabase
-        val cursor = db.rawQuery("SELECT * FROM Exercise WHERE workoutId = ?", null)
+        val cursor = db.rawQuery("SELECT * FROM Exercise WHERE workoutId = $workoutId", null)
         while (cursor.moveToNext()) {
             var exercise: Exercise = Exercise(
                 cursor.getInt(cursor.getColumnIndexOrThrow("exerciseId")), // Throw an error if the column doesn't exist
@@ -131,6 +131,20 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         }
         cursor.close()
         return exercises
+    }
+
+    fun insertCompletedExercise(completedId: Int, exerciseId: Int, setsCompleted: Int, repsCompleted: Int, weightUsed: Double): Long {
+        val db = this.writableDatabase
+        val cursor = db.rawQuery("INSERT INTO CompletedExercise (completedId, exerciseId, setsCompleted, repsCompleted, weightUsed) VALUES (?, ?, ?, ?, ?)", null)
+        var SQLQuery = "INSERT INTO CompletedExercise (completedId, exerciseId, setsCompleted, repsCompleted, weightUsed) VALUES (?,?,?,?,?)"
+        val SQLStatement = db.compileStatement(SQLQuery)
+        SQLStatement.bindLong(1, completedId.toLong())
+        SQLStatement.bindLong(2, exerciseId.toLong())
+        SQLStatement.bindLong(3, setsCompleted.toLong())
+        SQLStatement.bindLong(4, repsCompleted.toLong())
+        SQLStatement.bindDouble(5, weightUsed)
+        val result = SQLStatement.executeInsert()
+        return result
     }
 
 

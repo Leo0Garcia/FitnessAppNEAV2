@@ -27,6 +27,8 @@ class StartWorkout : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        // Inflate the layout for this fragment
+        val view = inflater.inflate(R.layout.fragment_start_workout, container, false)
 
         val workoutId = arguments?.getInt("workoutId") ?: 0 // Just incase value is empty or null set to 0
         println("workoutId: $workoutId")
@@ -37,9 +39,17 @@ class StartWorkout : Fragment() {
         exercises = databaseHelper.getWorkoutExercises(workoutId)
         println("exercises: $exercises")
 
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_start_workout, container, false)
+        for (exercise in exercises) {
+            println("exercise: $exercise")
+        }
+
+
+
+
+        return view
     }
+
+
 
 
     companion object {

@@ -135,7 +135,6 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
 
     fun insertCompletedExercise(completedId: Int, exerciseId: Int, setsCompleted: Int, repsCompleted: Int, weightUsed: Double): Long {
         val db = this.writableDatabase
-        val cursor = db.rawQuery("INSERT INTO CompletedExercise (completedId, exerciseId, setsCompleted, repsCompleted, weightUsed) VALUES (?, ?, ?, ?, ?)", null)
         var SQLQuery = "INSERT INTO CompletedExercise (completedId, exerciseId, setsCompleted, repsCompleted, weightUsed) VALUES (?,?,?,?,?)"
         val SQLStatement = db.compileStatement(SQLQuery)
         SQLStatement.bindLong(1, completedId.toLong())

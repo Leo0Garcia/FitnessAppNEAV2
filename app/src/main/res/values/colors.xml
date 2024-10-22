@@ -7,5 +7,7 @@
     <color name="navBackground">#262435</color>
     <color name="headingText">#777785</color>
     <color name="green">#57F287</color>
+    <color name="setColour">#99FFFFFF</color>
+    <color name="textColour">#CCFFFFFF</color>
 
 </resources>

@@ -79,7 +79,7 @@ class SelectWorkout : Fragment() {
             button.compoundDrawablePadding = 16
 
             button.setOnClickListener {
-                startWorkout(workoutId)
+                startWorkout(workoutId, workoutName)
             }
             workoutButtons.add(button)
         }
@@ -95,11 +95,12 @@ class SelectWorkout : Fragment() {
     }
 
 
-    private fun startWorkout(workoutId: Int) {
+    private fun startWorkout(workoutId: Int, workoutName: String) {
         val fragment = StartWorkout()
 
         val bundle = Bundle().apply {
             putInt("workoutId", workoutId)
+            putString("workoutName", workoutName)
         }
 
         fragment.arguments = bundle

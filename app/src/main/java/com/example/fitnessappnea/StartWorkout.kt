@@ -154,10 +154,11 @@ class StartWorkout : Fragment() {
                 setTextView.setTextColor(resources.getColor(R.color.setColour))
                 setTextView.setTypeface(null, android.graphics.Typeface.BOLD)
                 setTextView.layoutParams = LinearLayout.LayoutParams(
-                    0,
                     LinearLayout.LayoutParams.WRAP_CONTENT,
-                    1f
-                )
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    setMargins(16, 0, 142, 0)
+                }
 
                 val repEditText = EditText(requireContext()).apply {
                     val reps = exercise.reps
@@ -176,10 +177,11 @@ class StartWorkout : Fragment() {
                     inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
 
                     layoutParams = LinearLayout.LayoutParams(
-                        0,
                         LinearLayout.LayoutParams.WRAP_CONTENT,
-                        1f
-                    )
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        setMargins(92, 0, 104, 0)
+                    }
                 }
 
                 val weightEditText = EditText(requireContext()).apply {
@@ -199,15 +201,23 @@ class StartWorkout : Fragment() {
                     inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
 
                     layoutParams = LinearLayout.LayoutParams(
-                        0,
                         LinearLayout.LayoutParams.WRAP_CONTENT,
-                        1f
-                    )
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        setMargins(104, 0, 104, 0)
+                    }
                 }
 
 
                 val setCheckBox = CheckBox(requireContext()).apply {
                     buttonTintList = ColorStateList.valueOf(ContextCompat.getColor(context, R.color.colorAccent))
+                }
+
+                setCheckBox.layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    setMargins(32, 0, 16, 0)
                 }
 
                 setRow.addView(setTextView)
@@ -227,7 +237,6 @@ class StartWorkout : Fragment() {
 
             exerciseContainer.addView(spacerView)
         }
-
 
 
 

@@ -238,11 +238,34 @@ class StartWorkout : Fragment() {
             exerciseContainer.addView(spacerView)
         }
 
+        val finishButton = view.findViewById<TextView>(R.id.finish_workout_button)
+        finishButton.setOnClickListener {
+            finishWorkout(view)
+        }
+
+        // Hide bottom navigation
 
 
         return view
     }
 
+
+    fun finishWorkout(view: View) {
+        println("Finish workout") // TODO
+        // Need to gather the updated values and update in database
+
+        val exerciseContainer = view.findViewById<LinearLayout>(R.id.exerciseContainer)
+
+        // Enable bottom nav
+
+
+        for (i in 0 until exerciseContainer.childCount) {
+            val row = exerciseContainer.getChildAt(i+1) as LinearLayout
+            println(row)
+
+        }
+
+    }
 
 
 

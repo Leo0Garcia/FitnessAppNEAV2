@@ -4,6 +4,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.database.sqlite.SQLiteQuery
+import android.view.View
 
 
 data class Workout(
@@ -18,8 +19,8 @@ data class Exercise(
     val workoutId: Int,
     val exerciseName: String,
     val sets: Int,
-    val reps: Int,
-    val weight: Double
+    var reps: Int,
+    var weight: Double
 )
 
 class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
@@ -28,7 +29,7 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
 
     companion object {
         private const val DATABASE_NAME = "FitnessData.db"
-        private const val DATABASE_VERSION = 11
+        private const val DATABASE_VERSION = 12
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
@@ -60,7 +61,6 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
     completedId INTEGER PRIMARY KEY AUTOINCREMENT,
     workoutId INTEGER NOT NULL,
     completionDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    totalTime INTEGER,
     FOREIGN KEY (workoutId) REFERENCES Workout(workoutId)
 )"""
 
@@ -133,18 +133,42 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         return exercises
     }
 
-    fun insertCompletedExercise(completedId: Int, exerciseId: Int, setsCompleted: Int, repsCompleted: Int, weightUsed: Double): Long {
+    fun saveExercise(exerciseId: Int, reps: Int, weight: Double): Boolean {
         val db = this.writableDatabase
-        var SQLQuery = "INSERT INTO CompletedExercise (completedId, exerciseId, setsCompleted, repsCompleted, weightUsed) VALUES (?,?,?,?,?)"
+        val SQLQuery = "UPDATE Exercise SET reps = ?, weight = ? WHERE exerciseId = ?"
         val SQLStatement = db.compileStatement(SQLQuery)
-        SQLStatement.bindLong(1, completedId.toLong())
-        SQLStatement.bindLong(2, exerciseId.toLong())
-        SQLStatement.bindLong(3, setsCompleted.toLong())
-        SQLStatement.bindLong(4, repsCompleted.toLong())
-        SQLStatement.bindDouble(5, weightUsed)
-        val result = SQLStatement.executeInsert()
-        return result
+        SQLStatement.bindLong(1, reps.toLong())
+        SQLStatement.bindDouble(2, weight)
+        SQLStatement.bindLong(3, exerciseId.toLong())
+        SQLStatement.execute()
+        db.close()
+        return true
+
     }
 
+    fun saveCompletedWorkout(completedExercises: MutableList<Exercise>) {
+        val db = this.writableDatabase
+        println(completedExercises)
 
+        val SQLQuery = "INSERT INTO CompletedWorkout (workoutId) VALUES (?)"
+        val SQLStatement = db.compileStatement(SQLQuery)
+        SQLStatement.bindLong(1, completedExercises[0].workoutId.toLong())
+        val data = SQLStatement.execute()
+        print(data)
+
+
+
+
+        for (exercise in completedExercises) {
+            val SQLQuery = "INSERT INTO CompletedExercise (completedId, exerciseId, setsCompleted, repsCompleted, weightUsed) VALUES (?, ?, ?, ?, ?)"
+            val SQLStatement = db.compileStatement(SQLQuery)
+            SQLStatement.bindLong(1, exercise.workoutId.toLong())
+            SQLStatement.bindLong(2, exercise.exerciseId.toLong())
+            SQLStatement.bindLong(3, exercise.sets.toLong())
+            SQLStatement.bindLong(4, exercise.reps.toLong())
+            SQLStatement.bindDouble(5, exercise.weight)
+            SQLStatement.execute()
+        }
+
+    }
 }

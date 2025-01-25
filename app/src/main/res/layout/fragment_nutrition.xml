@@ -5,10 +5,29 @@
     android:layout_height="match_parent"
     tools:context=".Nutrition">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:orientation="horizontal"
+        android:padding="16dp">
+
+        <EditText
+            android:id="@+id/nutritionInput"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:hint="Enter Food Items"
+            android:textColorHint="@color/white"
+            android:textColor="@color/white"
+            android:inputType="text" />
+
+        <Button
+            android:id="@+id/submitNutritionButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/rounded_edittext_background"
+            android:text="Submit" />
+
+    </LinearLayout>
 
 </FrameLayout>

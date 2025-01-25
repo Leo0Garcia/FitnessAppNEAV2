@@ -75,12 +75,21 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
     FOREIGN KEY (exerciseId) REFERENCES Exercise(exerciseId)
 )"""
 
-
+            val NutritionQuery = """CREATE TABLE Nutrition (
+    date DATE PRIMARY KEY,
+    protein REAL,
+    carbohydrates REAL,
+    fats REAL,
+    fibre REAL,
+    calories REAL
+)"""
 
             db?.execSQL(WorkoutQuery)
             db?.execSQL(ExerciseQuery)
             db?.execSQL(CompletedWorkoutQuery)
             db?.execSQL(CompletedExerciseQuery)
+            db?.execSQL(NutritionQuery)
+
         } catch (e: Exception) {
             e.printStackTrace()
             println("error")
@@ -154,10 +163,6 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         val SQLStatement = db.compileStatement(SQLQuery)
         SQLStatement.bindLong(1, completedExercises[0].workoutId.toLong())
         val data = SQLStatement.execute()
-        print(data)
-
-
-
 
         for (exercise in completedExercises) {
             val SQLQuery = "INSERT INTO CompletedExercise (completedId, exerciseId, setsCompleted, repsCompleted, weightUsed) VALUES (?, ?, ?, ?, ?)"
@@ -170,5 +175,23 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
             SQLStatement.execute()
         }
 
+    }
+
+    fun saveNutrition(date: String, protein: Double, carbohydrates: Double, fats: Double, fibre: Double, calories: Double): Boolean {
+        val db = this.writableDatabase
+
+        // Need to update the record if it already exists, adding to the totals or if it doesnt exist then make the record
+        val SQLQuery = "SELECT 1 FROM Nutrition WHERE date = ?"
+        val SQLStatement = db.compileStatement(SQLQuery)
+        SQLStatement.bindString(1, date)
+
+        val cursor = SQLStatement.execute()
+        println(cursor)
+
+
+
+
+        SQLStatement.execute()
+        return true
     }
 }

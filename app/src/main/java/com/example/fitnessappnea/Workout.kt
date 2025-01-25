@@ -134,6 +134,7 @@ class Workout : Fragment() {
         // Set data to the TextViews in the inflated layout
         workoutView.findViewById<TextView>(R.id.workout_name).text = name
 
+
         val exerciseContainer = workoutView.findViewById<LinearLayout>(R.id.exercise_container)
         exerciseContainer.removeAllViews()
         for (exercise in exercises) {
@@ -150,16 +151,15 @@ class Workout : Fragment() {
 
         workoutView.findViewById<TextView>(R.id.workout_date).text = date
 
+        workoutView.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply {
+            this.setMargins(0, 0, 0, 24)
+        }
 
         // Add the inflated layout to the workout list
         val workoutList: LinearLayout = view.findViewById(R.id.workout_list)
         workoutList.addView(workoutView)
-    }
-
-    companion object {
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            Workout().apply {
-            }
     }
 }

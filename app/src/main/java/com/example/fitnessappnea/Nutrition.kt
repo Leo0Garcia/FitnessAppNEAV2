@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import com.example.fitnessappnea.database.DatabaseHelper
+import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.gson.Gson
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
@@ -40,10 +41,6 @@ class Nutrition : Fragment() {
 
     private lateinit var databaseHelper: DatabaseHelper
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -57,34 +54,51 @@ class Nutrition : Fragment() {
 
         submitButton.setOnClickListener {
             val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-            val string = nutritionText.text.toString()
-            var data = requestNutritionData(string)
-            var parseResult = parseResponse(data)
-            println(parseResult)
-            parseResult.foods.forEach {
-                databaseHelper.saveNutrition(currentDate, it.nf_protein, it.nf_total_carbohydrate, it.nf_total_fat, it.nf_dietary_fiber, it.nf_calories)
-            }
+            val inputQuery = nutritionText.text.toString()
 
+            // Make the network request
+            requestNutritionData(inputQuery) { response ->
+                response?.let {
+                    val parseResult = parseResponse(it)
+
+                    // Save the data into the database
+                    parseResult.foods.forEach { food ->
+                        databaseHelper.saveNutrition(
+                            currentDate,
+                            food.nf_protein,
+                            food.nf_total_carbohydrate,
+                            food.nf_total_fat,
+                            food.nf_dietary_fiber,
+                            food.nf_calories
+                        )
+                    }
+
+                    println("Nutrition data saved successfully!")
+                } ?: run {
+                    println("Failed to retrieve nutrition data.")
+                }
+            }
+            refreshNutritionProgressBars(view)
         }
+
+
+        refreshNutritionProgressBars(view)
 
         return view
     }
 
-
-    fun requestNutritionData(string: String): String {
+    private fun requestNutritionData(query: String, callback: (String?) -> Unit) {
         val client = OkHttpClient()
-
         val url = "https://trackapi.nutritionix.com/v2/natural/nutrients"
 
         val jsonBody = """
         {
-            "query": "$string"
+            "query": "$query"
         }
         """.trimIndent()
 
         val requestBody = jsonBody.toRequestBody("application/json; charset=utf-8".toMediaType())
 
-        // Build the request with headers and body
         val request = Request.Builder()
             .url(url)
             .addHeader("x-app-key", "37f974febc324eb24a49f3a748098660")
@@ -92,30 +106,44 @@ class Nutrition : Fragment() {
             .post(requestBody)
             .build()
 
-        var result: String = ""
-
-        // Execute
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 println("Request failed: ${e.message}")
+                callback(null)
             }
 
             override fun onResponse(call: Call, response: Response) {
                 if (response.isSuccessful) {
-                    println("Response: ${response.body?.string()}")
-
+                    val responseBody = response.body?.string()
+                    println("Response: $responseBody")
+                    callback(responseBody)
                 } else {
                     println("Request failed with code: ${response.code}")
+                    callback(null)
                 }
             }
         })
-        return result
     }
 
-    fun parseResponse(response: String): FoodResponse {
+    private fun parseResponse(response: String): FoodResponse {
         val gson = Gson()
-        val foodResponse = gson.fromJson(response, FoodResponse::class.java)
+        return gson.fromJson(response, FoodResponse::class.java)
+    }
 
-        return foodResponse
+    private fun refreshNutritionProgressBars(view: View) {
+        val proteinProgressBar = view.findViewById<LinearProgressIndicator>(R.id.proteinProgress)
+        val carbsProgressBar = view.findViewById<LinearProgressIndicator>(R.id.carbsProgress)
+        val fatsProgressBar = view.findViewById<LinearProgressIndicator>(R.id.fatsProgress)
+        val fibreProgressBar = view.findViewById<LinearProgressIndicator>(R.id.fibreProgress)
+
+        val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val nutritionData = databaseHelper.getNutritionData(currentDate)
+
+        if (nutritionData != null) {
+            proteinProgressBar?.progress = (nutritionData.protein.toInt() / 60)
+            carbsProgressBar?.progress = (nutritionData.carbohydrates.toInt() / 300)
+            fatsProgressBar?.progress = (nutritionData.fats.toInt() / 65)
+            fibreProgressBar?.progress = (nutritionData.fibre.toInt() / 30)
+        }
     }
 }

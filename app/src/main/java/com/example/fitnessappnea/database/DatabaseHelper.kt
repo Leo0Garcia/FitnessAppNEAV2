@@ -23,13 +23,21 @@ data class Exercise(
     var weight: Double
 )
 
+data class NutritionData(
+    val protein: Double,
+    val carbohydrates: Double,
+    val fats: Double,
+    val fibre: Double,
+    val calories: Double
+)
+
 class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
     SQLiteOpenHelper(context, DATABASE_NAME, factory, DATABASE_VERSION) {
 
 
     companion object {
         private const val DATABASE_NAME = "FitnessData.db"
-        private const val DATABASE_VERSION = 12
+        private const val DATABASE_VERSION = 13
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
@@ -181,17 +189,63 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         val db = this.writableDatabase
 
         // Need to update the record if it already exists, adding to the totals or if it doesnt exist then make the record
-        val SQLQuery = "SELECT 1 FROM Nutrition WHERE date = ?"
-        val SQLStatement = db.compileStatement(SQLQuery)
-        SQLStatement.bindString(1, date)
+        val cursor = db.rawQuery("SELECT * FROM Nutrition WHERE date = ?", arrayOf(date))
+        if (cursor.moveToFirst()) {
+            val date = cursor.getString(cursor.getColumnIndexOrThrow("date"))
+            val protein = cursor.getDouble(cursor.getColumnIndexOrThrow("protein")) + protein
+            val carbohydrates = cursor.getDouble(cursor.getColumnIndexOrThrow("carbohydrates")) + carbohydrates
+            val fats = cursor.getDouble(cursor.getColumnIndexOrThrow("fats")) + fats
+            val fibre = cursor.getDouble(cursor.getColumnIndexOrThrow("fibre")) + fibre
+            val calories = cursor.getDouble(cursor.getColumnIndexOrThrow("calories")) + calories
 
-        val cursor = SQLStatement.execute()
-        println(cursor)
+            val SQLQuery = "UPDATE Nutrition SET protein = ?, carbohydrates = ?, fats = ?, fibre = ?, calories = ? WHERE date = ?"
+            val SQLStatement = db.compileStatement(SQLQuery)
+            SQLStatement.bindDouble(1, protein)
+            SQLStatement.bindDouble(2, carbohydrates)
+            SQLStatement.bindDouble(3, fats)
+            SQLStatement.bindDouble(4, fibre)
+            SQLStatement.bindDouble(5, calories)
+            SQLStatement.bindString(6, date)
+            SQLStatement.execute()
+        } else {
+            val SQLQuery = "INSERT INTO Nutrition (date, protein, carbohydrates, fats, fibre, calories) VALUES (?, ?, ?, ?, ?, ?)"
+            val SQLStatement = db.compileStatement(SQLQuery)
 
+            SQLStatement.bindString(1, date)
+            SQLStatement.bindDouble(2, protein)
+            SQLStatement.bindDouble(3, carbohydrates)
+            SQLStatement.bindDouble(4, fats)
+            SQLStatement.bindDouble(5, fibre)
+            SQLStatement.bindDouble(6, calories)
+            SQLStatement.execute()
+        }
 
+        cursor.close()
 
-
-        SQLStatement.execute()
         return true
     }
+
+    fun getNutritionData(date: String): NutritionData? {
+        val db = this.readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM Nutrition WHERE date = ?", arrayOf(date))
+
+        if (cursor.moveToFirst()) {
+            val protein = cursor.getDouble(cursor.getColumnIndexOrThrow("protein"))
+            val carbohydrates = cursor.getDouble(cursor.getColumnIndexOrThrow("carbohydrates"))
+            val fats = cursor.getDouble(cursor.getColumnIndexOrThrow("fats"))
+            val fibre = cursor.getDouble(cursor.getColumnIndexOrThrow("fibre"))
+            val calories = cursor.getDouble(cursor.getColumnIndexOrThrow("calories"))
+
+            cursor.close()
+
+            println("Protein: $protein, Carbohydrates: $carbohydrates, Fats: $fats, Fibre: $fibre, Calories: $calories")
+
+            return NutritionData(protein, carbohydrates, fats, fibre, calories)
+        }
+
+        cursor.close()
+        return null
+    }
 }
+
+

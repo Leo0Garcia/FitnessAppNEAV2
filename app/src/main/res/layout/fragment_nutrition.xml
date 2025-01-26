@@ -3,31 +3,113 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".Nutrition">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="horizontal"
-        android:padding="16dp">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-        <EditText
-            android:id="@+id/nutritionInput"
-            android:layout_width="250dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Enter Food Items"
-            android:textColorHint="@color/white"
-            android:textColor="@color/white"
-            android:inputType="text" />
+            android:orientation="horizontal"
+            android:padding="16dp">
 
-        <Button
-            android:id="@+id/submitNutritionButton"
+            <EditText
+                android:id="@+id/nutritionInput"
+                android:layout_width="250dp"
+                android:layout_height="wrap_content"
+                android:hint="Enter Food Items"
+                android:textColorHint="@color/white"
+                android:textColor="@color/white"
+                android:inputType="text" />
+
+            <Button
+                android:id="@+id/submitNutritionButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/rounded_edittext_background"
+                android:text="Submit" />
+        </LinearLayout>
+
+
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/rounded_edittext_background"
-            android:text="Submit" />
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:layout_weight="0.1"
+            android:layout_gravity="center_horizontal"
+            >
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Protein"
+                android:layout_marginTop="20dp"
+                android:textSize="16dp"
+                android:textColor="@color/white"/>
+
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/proteinProgress"
+                android:layout_width="325dp"
+                android:layout_height="100dp"
+                app:indicatorColor="#ef9035"
+                app:trackStopIndicatorSize="0dp"
+                android:layout_gravity="center"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Carbohydrates"
+                android:layout_marginTop="20dp"
+                android:textSize="16dp"
+                android:textColor="@color/white"/>
+
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/carbsProgress"
+                android:layout_width="325dp"
+                android:layout_height="100dp"
+                app:indicatorColor="#d85565"
+                app:trackStopIndicatorSize="0dp"
+                android:layout_gravity="center" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Fats"
+                android:layout_marginTop="20dp"
+                android:textSize="16dp"
+                android:textColor="@color/white"/>
+
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/fatsProgress"
+                android:layout_width="325dp"
+                android:layout_height="100dp"
+                app:indicatorColor="#ad79dc"
+                app:trackStopIndicatorSize="0dp"
+                android:layout_gravity="center" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Fibre"
+                android:layout_marginTop="20dp"
+                android:textSize="16dp"
+                android:textColor="@color/white"/>
+
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/fibreProgress"
+                android:layout_width="325dp"
+                android:layout_height="100dp"
+                app:indicatorColor="#376de2"
+                app:trackStopIndicatorSize="0dp"
+                android:layout_gravity="center" />
+
+        </LinearLayout>
     </LinearLayout>
+
 
 </FrameLayout>

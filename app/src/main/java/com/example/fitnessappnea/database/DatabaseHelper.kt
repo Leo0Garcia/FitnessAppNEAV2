@@ -89,7 +89,15 @@ data class NutritionData(
     val fats: Double,
     val fibre: Double,
     val calories: Double,
-    val foodName: String = ""
+    val foodName: String?
+)
+
+data class NutritionDataItem(
+    val protein: Double,
+    val carbohydrates: Double,
+    val fats: Double,
+    val fibre: Double,
+    val calories: Double,
 )
 
 class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
@@ -98,7 +106,7 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
 
     companion object {
         private const val DATABASE_NAME = "FitnessData.db"
-        private const val DATABASE_VERSION = 13
+        private const val DATABASE_VERSION = 16
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
@@ -152,7 +160,7 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
     fats REAL NOT NULL DEFAULT 0,
     fibre REAL NOT NULL DEFAULT 0,
     calories REAL NOT NULL DEFAULT 0,
-    foodName TEXT NOT NULL DEFAULT ''
+    foodName TEXT NOT NULL
 )"""
 
             db?.execSQL(WorkoutQuery)
@@ -172,6 +180,7 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         db?.execSQL("DROP TABLE IF EXISTS Exercise")
         db?.execSQL("DROP TABLE IF EXISTS CompletedWorkout")
         db?.execSQL("DROP TABLE IF EXISTS CompletedExercise")
+        db?.execSQL("DROP TABLE IF EXISTS Nutrition")
         onCreate(db);
     }
 
@@ -324,36 +333,61 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
 
     fun getNutritionData(date: String): NutritionData? {
         val db = this.readableDatabase
-        val cursor = db.rawQuery("SELECT * FROM Nutrition WHERE date = ?", arrayOf(date))
-        var protein = 0.0
-        var carbohydrates = 0.0
-        var fats = 0.0
-        var fibre = 0.0
-        var calories = 0.0
-        var foodArray = mutableListOf<NutritionData>()
+        val cursor = db.rawQuery("""
+            SELECT date, 
+                SUM(protein) AS protein,
+                SUM(carbohydrates) AS carbohydrates,
+                SUM(fats) AS fats,
+                SUM(fibre) AS fibre,
+                SUM(calories) AS calories
+            FROM Nutrition 
+            WHERE date = ?
+            GROUP BY date""".trimMargin(), arrayOf(date))
 
 
+//        try {
         if (cursor.moveToFirst()) {
-            val Indivprotein = cursor.getDouble(cursor.getColumnIndexOrThrow("protein"))
-            val Indivcarbohydrates = cursor.getDouble(cursor.getColumnIndexOrThrow("carbohydrates"))
-            val Indivfats = cursor.getDouble(cursor.getColumnIndexOrThrow("fats"))
-            val Indivfibre = cursor.getDouble(cursor.getColumnIndexOrThrow("fibre"))
-            val Indivcalories = cursor.getDouble(cursor.getColumnIndexOrThrow("calories"))
-            val IndivfoodName = cursor.getString(cursor.getColumnIndexOrThrow("foodName"))
-
-            protein += Indivprotein
-            carbohydrates += Indivcarbohydrates
-            fats += Indivfats
-            fibre += Indivfibre
-            calories += Indivcalories
-
-
-            cursor.close()
-
+            val protein = cursor.getDouble(cursor.getColumnIndexOrThrow("protein"))
+            val carbohydrates = cursor.getDouble(cursor.getColumnIndexOrThrow("carbohydrates"))
+            val fats = cursor.getDouble(cursor.getColumnIndexOrThrow("fats"))
+            val fibre = cursor.getDouble(cursor.getColumnIndexOrThrow("fibre"))
+            val calories = cursor.getDouble(cursor.getColumnIndexOrThrow("calories"))
+            return (NutritionData(protein, carbohydrates, fats, fibre, calories, null))
         }
+//        } catch (e: Exception) {
+//            cursor.close()
+//            return NutritionData(0.0, 0.0, 0.0, 0.0, 0.0, null)
+//        }
+        return NutritionData(0.0, 0.0, 0.0, 0.0, 0.0, null)
+    }
 
-        cursor.close()
-        return (protein, carbohydrates, fats, fibre, calories, foodArray)
+    fun getFoodList(date: String): MutableList<NutritionDataItem> {
+        val db = this.readableDatabase
+        val cursor = db.rawQuery(
+            """
+            SELECT *
+            FROM Nutrition 
+            WHERE date = ?""".trimMargin(), arrayOf(date)
+        )
+
+        val foodList = mutableListOf<NutritionDataItem>()
+
+        try {
+            while (cursor.moveToNext()) {
+                val data = NutritionDataItem(
+                    cursor.getDouble(cursor.getColumnIndexOrThrow("protein")),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow("carbohydrates")),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow("fats")),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow("fibre")),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow("calories"))
+                )
+                foodList.add(data)
+            }
+        } catch (e: Exception) {
+            cursor.close()
+            return foodList
+        }
+        return foodList
     }
 }
 

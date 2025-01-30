@@ -73,7 +73,8 @@ class Nutrition : Fragment() {
                             food.nf_total_carbohydrate,
                             food.nf_total_fat,
                             food.nf_dietary_fiber,
-                            food.nf_calories
+                            food.nf_calories,
+                            food.food_name
                         )
                     }
 

@@ -3,16 +3,46 @@ package com.example.fitnessappnea.database
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.database.sqlite.SQLiteQuery
-import android.view.View
+import android.os.Parcel
+import android.os.Parcelable
 
 
 data class Workout(
     val workoutId: Int,
     val workoutName: String,
     val notes: String,
-    val createdAt: String
-)
+    val createdAt: String,
+    val exercises: MutableList<Exercise>? = mutableListOf()
+) : Parcelable {
+    constructor(parcel: Parcel) : this(
+        parcel.readInt(),
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        mutableListOf<Exercise>().apply {
+            parcel.readList(this, Exercise::class.java.classLoader)
+        }
+    )
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeInt(workoutId)
+        parcel.writeString(workoutName)
+        parcel.writeString(notes)
+        parcel.writeString(createdAt)
+        parcel.writeList(exercises)
+    }
+
+    override fun describeContents(): Int = 0
+
+    companion object CREATOR : Parcelable.Creator<Workout> {
+        override fun createFromParcel(parcel: Parcel): Workout {
+            return Workout(parcel)
+        }
+
+        override fun newArray(size: Int): Array<Workout?> {
+            return arrayOfNulls(size)
+        }
+    }
+}
 
 data class Exercise(
     val exerciseId: Int,
@@ -21,14 +51,45 @@ data class Exercise(
     val sets: Int,
     var reps: Int,
     var weight: Double
-)
+) : Parcelable {
+    constructor(parcel: Parcel) : this(
+        parcel.readInt(),
+        parcel.readInt(),
+        parcel.readString() ?: "",
+        parcel.readInt(),
+        parcel.readInt(),
+        parcel.readDouble()
+    )
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeInt(exerciseId)
+        parcel.writeInt(workoutId)
+        parcel.writeString(exerciseName)
+        parcel.writeInt(sets)
+        parcel.writeInt(reps)
+        parcel.writeDouble(weight)
+    }
+
+    override fun describeContents(): Int = 0
+
+    companion object CREATOR : Parcelable.Creator<Exercise> {
+        override fun createFromParcel(parcel: Parcel): Exercise {
+            return Exercise(parcel)
+        }
+
+        override fun newArray(size: Int): Array<Exercise?> {
+            return arrayOfNulls(size)
+        }
+    }
+}
 
 data class NutritionData(
     val protein: Double,
     val carbohydrates: Double,
     val fats: Double,
     val fibre: Double,
-    val calories: Double
+    val calories: Double,
+    val foodName: String = ""
 )
 
 class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
@@ -84,12 +145,14 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
 )"""
 
             val NutritionQuery = """CREATE TABLE Nutrition (
-    date DATE PRIMARY KEY,
-    protein REAL,
-    carbohydrates REAL,
-    fats REAL,
-    fibre REAL,
-    calories REAL
+    uuid INTEGER PRIMARY KEY AUTOINCREMENT,
+    date DATE DEFAULT CURRENT_DATE,
+    protein REAL NOT NULL DEFAULT 0,
+    carbohydrates REAL NOT NULL DEFAULT 0,
+    fats REAL NOT NULL DEFAULT 0,
+    fibre REAL NOT NULL DEFAULT 0,
+    calories REAL NOT NULL DEFAULT 0,
+    foodName TEXT NOT NULL DEFAULT ''
 )"""
 
             db?.execSQL(WorkoutQuery)
@@ -121,13 +184,68 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
                 cursor.getInt(cursor.getColumnIndexOrThrow("workoutId")), // Throw an error if the column doesn't exist
                 cursor.getString(cursor.getColumnIndexOrThrow("workoutName"))?: "ERROR: WORKOUT NAME NULL",
                 cursor.getString(cursor.getColumnIndexOrThrow("notes"))?: "",
-                cursor.getString(cursor.getColumnIndexOrThrow("createdAt"))?: ""
+                cursor.getString(cursor.getColumnIndexOrThrow("createdAt"))?: "",
+                null
             )
             workouts.add(workout)
         }
 
         cursor.close()
         return workouts
+    }
+
+    fun NEWgetAllWorkouts(workoutId: Int? = null): List<Workout> {
+        val db = this.readableDatabase
+        val cursor = db.rawQuery("""
+            SELECT 
+                w.workoutId,
+                w.workoutName,
+                w.notes,
+                w.createdAt,
+                e.exerciseId,
+                e.exerciseName,
+                e.sets,
+                e.reps,
+                e.weight
+            FROM Workout w
+            LEFT JOIN Exercise e ON w.workoutId = e.workoutId
+            ORDER BY w.workoutId, e.exerciseId;
+        """.trimIndent(), null)
+
+        val workoutMap = mutableMapOf<Int, Workout>() // Map to store workouts by ID
+
+        while (cursor.moveToNext()) {
+            val workoutId = cursor.getInt(cursor.getColumnIndexOrThrow("workoutId"))
+
+            // If workout is not already added, create it
+            if (!workoutMap.containsKey(workoutId)) {
+                workoutMap[workoutId] = Workout(
+                    workoutId,
+                    cursor.getString(cursor.getColumnIndexOrThrow("workoutName")) ?: "Unnamed Workout",
+                    cursor.getString(cursor.getColumnIndexOrThrow("notes")) ?: "",
+                    cursor.getString(cursor.getColumnIndexOrThrow("createdAt")) ?: "",
+                    mutableListOf()
+                )
+            }
+
+            // Check if there is an exercise linked to this workout
+            val exerciseId = cursor.getColumnIndex("exerciseId").takeIf { it >= 0 }?.let { cursor.getInt(it) }
+            if (exerciseId != null) {
+                val exercise = Exercise(
+                    exerciseId,
+                    workoutId,
+                    cursor.getString(cursor.getColumnIndexOrThrow("exerciseName")),
+                    cursor.getInt(cursor.getColumnIndexOrThrow("sets")),
+                    cursor.getInt(cursor.getColumnIndexOrThrow("reps")),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow("weight"))
+                )
+                workoutMap[workoutId]?.exercises?.add(exercise)
+            }
+        }
+
+        cursor.close()
+        println(workoutMap.values.toList())
+        return workoutMap.values.toList()
     }
 
     fun getWorkoutExercises(workoutId: Int): List<Exercise> {
@@ -185,66 +303,57 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
 
     }
 
-    fun saveNutrition(date: String, protein: Double, carbohydrates: Double, fats: Double, fibre: Double, calories: Double): Boolean {
+    fun saveNutrition(date: String, protein: Double, carbohydrates: Double, fats: Double, fibre: Double, calories: Double, foodName: String): Boolean {
         val db = this.writableDatabase
 
-        // Need to update the record if it already exists, adding to the totals or if it doesnt exist then make the record
-        val cursor = db.rawQuery("SELECT * FROM Nutrition WHERE date = ?", arrayOf(date))
-        if (cursor.moveToFirst()) {
-            val date = cursor.getString(cursor.getColumnIndexOrThrow("date"))
-            val protein = cursor.getDouble(cursor.getColumnIndexOrThrow("protein")) + protein
-            val carbohydrates = cursor.getDouble(cursor.getColumnIndexOrThrow("carbohydrates")) + carbohydrates
-            val fats = cursor.getDouble(cursor.getColumnIndexOrThrow("fats")) + fats
-            val fibre = cursor.getDouble(cursor.getColumnIndexOrThrow("fibre")) + fibre
-            val calories = cursor.getDouble(cursor.getColumnIndexOrThrow("calories")) + calories
 
-            val SQLQuery = "UPDATE Nutrition SET protein = ?, carbohydrates = ?, fats = ?, fibre = ?, calories = ? WHERE date = ?"
-            val SQLStatement = db.compileStatement(SQLQuery)
-            SQLStatement.bindDouble(1, protein)
-            SQLStatement.bindDouble(2, carbohydrates)
-            SQLStatement.bindDouble(3, fats)
-            SQLStatement.bindDouble(4, fibre)
-            SQLStatement.bindDouble(5, calories)
-            SQLStatement.bindString(6, date)
-            SQLStatement.execute()
-        } else {
-            val SQLQuery = "INSERT INTO Nutrition (date, protein, carbohydrates, fats, fibre, calories) VALUES (?, ?, ?, ?, ?, ?)"
-            val SQLStatement = db.compileStatement(SQLQuery)
+        val SQLQuery = "INSERT INTO Nutrition (date, protein, carbohydrates, fats, fibre, calories, foodName) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        val SQLStatement = db.compileStatement(SQLQuery)
 
-            SQLStatement.bindString(1, date)
-            SQLStatement.bindDouble(2, protein)
-            SQLStatement.bindDouble(3, carbohydrates)
-            SQLStatement.bindDouble(4, fats)
-            SQLStatement.bindDouble(5, fibre)
-            SQLStatement.bindDouble(6, calories)
-            SQLStatement.execute()
-        }
+        SQLStatement.bindString(1, date)
+        SQLStatement.bindDouble(2, protein)
+        SQLStatement.bindDouble(3, carbohydrates)
+        SQLStatement.bindDouble(4, fats)
+        SQLStatement.bindDouble(5, fibre)
+        SQLStatement.bindDouble(6, calories)
+        SQLStatement.bindString(7, foodName)
 
-        cursor.close()
-
+        SQLStatement.execute()
         return true
     }
 
     fun getNutritionData(date: String): NutritionData? {
         val db = this.readableDatabase
         val cursor = db.rawQuery("SELECT * FROM Nutrition WHERE date = ?", arrayOf(date))
+        var protein = 0.0
+        var carbohydrates = 0.0
+        var fats = 0.0
+        var fibre = 0.0
+        var calories = 0.0
+        var foodArray = mutableListOf<NutritionData>()
+
 
         if (cursor.moveToFirst()) {
-            val protein = cursor.getDouble(cursor.getColumnIndexOrThrow("protein"))
-            val carbohydrates = cursor.getDouble(cursor.getColumnIndexOrThrow("carbohydrates"))
-            val fats = cursor.getDouble(cursor.getColumnIndexOrThrow("fats"))
-            val fibre = cursor.getDouble(cursor.getColumnIndexOrThrow("fibre"))
-            val calories = cursor.getDouble(cursor.getColumnIndexOrThrow("calories"))
+            val Indivprotein = cursor.getDouble(cursor.getColumnIndexOrThrow("protein"))
+            val Indivcarbohydrates = cursor.getDouble(cursor.getColumnIndexOrThrow("carbohydrates"))
+            val Indivfats = cursor.getDouble(cursor.getColumnIndexOrThrow("fats"))
+            val Indivfibre = cursor.getDouble(cursor.getColumnIndexOrThrow("fibre"))
+            val Indivcalories = cursor.getDouble(cursor.getColumnIndexOrThrow("calories"))
+            val IndivfoodName = cursor.getString(cursor.getColumnIndexOrThrow("foodName"))
+
+            protein += Indivprotein
+            carbohydrates += Indivcarbohydrates
+            fats += Indivfats
+            fibre += Indivfibre
+            calories += Indivcalories
+
 
             cursor.close()
 
-            println("Protein: $protein, Carbohydrates: $carbohydrates, Fats: $fats, Fibre: $fibre, Calories: $calories")
-
-            return NutritionData(protein, carbohydrates, fats, fibre, calories)
         }
 
         cursor.close()
-        return null
+        return (protein, carbohydrates, fats, fibre, calories, foodArray)
     }
 }
 

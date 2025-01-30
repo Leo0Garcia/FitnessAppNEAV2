@@ -45,6 +45,7 @@
             >
 
             <TextView
+                android:id="@+id/proteinText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Protein"
@@ -56,11 +57,13 @@
                 android:id="@+id/proteinProgress"
                 android:layout_width="325dp"
                 android:layout_height="100dp"
+                android:max="70"
                 app:indicatorColor="#ef9035"
                 app:trackStopIndicatorSize="0dp"
                 android:layout_gravity="center"/>
 
             <TextView
+                android:id="@+id/carbohydratesText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Carbohydrates"
@@ -72,11 +75,13 @@
                 android:id="@+id/carbsProgress"
                 android:layout_width="325dp"
                 android:layout_height="100dp"
+                android:max="300"
                 app:indicatorColor="#d85565"
                 app:trackStopIndicatorSize="0dp"
                 android:layout_gravity="center" />
 
             <TextView
+                android:id="@+id/fatsText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Fats"
@@ -88,11 +93,13 @@
                 android:id="@+id/fatsProgress"
                 android:layout_width="325dp"
                 android:layout_height="100dp"
+                android:max="70"
                 app:indicatorColor="#ad79dc"
                 app:trackStopIndicatorSize="0dp"
                 android:layout_gravity="center" />
 
             <TextView
+                android:id="@+id/fibreText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Fibre"
@@ -104,6 +111,7 @@
                 android:id="@+id/fibreProgress"
                 android:layout_width="325dp"
                 android:layout_height="100dp"
+                android:max="35"
                 app:indicatorColor="#376de2"
                 app:trackStopIndicatorSize="0dp"
                 android:layout_gravity="center" />

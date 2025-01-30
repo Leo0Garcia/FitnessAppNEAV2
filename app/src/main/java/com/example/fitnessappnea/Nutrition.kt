@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import com.example.fitnessappnea.database.DatabaseHelper
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.gson.Gson
@@ -17,6 +18,7 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.round
 
 // Define classes for json parsing
 
@@ -52,6 +54,8 @@ class Nutrition : Fragment() {
 
         databaseHelper = DatabaseHelper(requireContext(), null)
 
+        refreshNutritionProgressBars(view)
+
         submitButton.setOnClickListener {
             val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
             val inputQuery = nutritionText.text.toString()
@@ -73,17 +77,16 @@ class Nutrition : Fragment() {
                         )
                     }
 
+                    requireActivity().runOnUiThread {
+                        refreshNutritionProgressBars(view)
+                    }
+
                     println("Nutrition data saved successfully!")
                 } ?: run {
                     println("Failed to retrieve nutrition data.")
                 }
             }
-            refreshNutritionProgressBars(view)
         }
-
-
-        refreshNutritionProgressBars(view)
-
         return view
     }
 
@@ -135,15 +138,43 @@ class Nutrition : Fragment() {
         val carbsProgressBar = view.findViewById<LinearProgressIndicator>(R.id.carbsProgress)
         val fatsProgressBar = view.findViewById<LinearProgressIndicator>(R.id.fatsProgress)
         val fibreProgressBar = view.findViewById<LinearProgressIndicator>(R.id.fibreProgress)
+        val proteinText = view.findViewById<TextView>(R.id.proteinText)
+        val carbsText = view.findViewById<TextView>(R.id.carbohydratesText)
+        val fatsText = view.findViewById<TextView>(R.id.fatsText)
+        val fibreText = view.findViewById<TextView>(R.id.fibreText)
 
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val nutritionData = databaseHelper.getNutritionData(currentDate)
 
         if (nutritionData != null) {
-            proteinProgressBar?.progress = (nutritionData.protein.toInt() / 60)
-            carbsProgressBar?.progress = (nutritionData.carbohydrates.toInt() / 300)
-            fatsProgressBar?.progress = (nutritionData.fats.toInt() / 65)
-            fibreProgressBar?.progress = (nutritionData.fibre.toInt() / 30)
+            if (nutritionData.protein.toInt() < 70) {
+                proteinProgressBar?.progress = nutritionData.protein.toInt()
+                proteinText?.text = "Protein - " + Math.round(nutritionData.protein).toString() + "g"
+            } else {
+                proteinProgressBar?.progress = 70
+                proteinText?.text = "Protein - " + Math.round(nutritionData.protein).toString() + "g"
+            }
+            if (nutritionData.carbohydrates.toInt() < 300) {
+                carbsProgressBar?.progress = nutritionData.carbohydrates.toInt()
+                carbsText?.text = "Carbohydrates - " + Math.round(nutritionData.carbohydrates).toString() + "g"
+            } else {
+                carbsProgressBar?.progress = 300
+                carbsText?.text = "Carbohydrates - " + Math.round(nutritionData.carbohydrates).toString() + "g"
+            }
+            if (nutritionData.fats.toInt() < 70) {
+                fatsProgressBar?.progress = nutritionData.fats.toInt()
+                fatsText?.text = "Fat - " + Math.round(nutritionData.fats).toString() + "g"
+            } else {
+                fatsProgressBar?.progress = 70
+                fatsText?.text = "Fat - " + Math.round(nutritionData.fats).toString() + "g"
+            }
+            if (nutritionData.fibre.toInt() < 35) {
+                fibreProgressBar?.progress = nutritionData.fibre.toInt()
+                fibreText?.text = "Fibre - " + Math.round(nutritionData.fibre).toString() + "g"
+            } else {
+                fibreProgressBar?.progress = 35
+                fibreText?.text = "Fibre - " + Math.round(nutritionData.fibre).toString() + "g"
+            }
         }
     }
 }

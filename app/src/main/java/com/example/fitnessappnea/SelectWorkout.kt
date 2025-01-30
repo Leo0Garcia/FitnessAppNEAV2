@@ -11,7 +11,7 @@ import android.widget.Button
 import android.widget.LinearLayout
 import com.example.fitnessapp.StartWorkout
 import com.example.fitnessappnea.database.DatabaseHelper
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.example.fitnessappnea.database.Workout
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -44,8 +44,7 @@ class SelectWorkout : Fragment() {
         }
 
         // Fetch all workouts
-        var workoutList = databaseHelper.getAllWorkouts()
-        println(workoutList)
+        var workoutList = databaseHelper.NEWgetAllWorkouts()
 
 
         var workouts = mutableListOf<Pair<Int, String>>()
@@ -80,7 +79,7 @@ class SelectWorkout : Fragment() {
             button.compoundDrawablePadding = 16
 
             button.setOnClickListener {
-                startWorkout(workoutId, workoutName)
+                startWorkout(workoutId, workoutName, workoutList)
             }
             workoutButtons.add(button)
         }
@@ -96,12 +95,13 @@ class SelectWorkout : Fragment() {
     }
 
 
-    private fun startWorkout(workoutId: Int, workoutName: String) {
+    private fun startWorkout(workoutId: Int, workoutName: String, workoutList: List<Workout>) {
         val fragment = StartWorkout()
 
         val bundle = Bundle().apply {
             putInt("workoutId", workoutId)
             putString("workoutName", workoutName)
+            putParcelableArrayList("workoutList", ArrayList(workoutList))
         }
 
         fragment.arguments = bundle

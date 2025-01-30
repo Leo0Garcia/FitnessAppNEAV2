@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import com.example.fitnessappnea.database.DatabaseHelper
 import com.example.fitnessappnea.database.Exercise
 import com.example.fitnessappnea.R
+import com.example.fitnessappnea.database.Workout
 
 class StartWorkout : Fragment() {
 
@@ -25,12 +26,12 @@ class StartWorkout : Fragment() {
 
         val workoutId = arguments?.getInt("workoutId") ?: 0
         val workoutName = arguments?.getString("workoutName") ?: ""
+        val workoutList = arguments?.getParcelableArrayList<Workout>("workoutList") ?: mutableListOf()
         val workoutNameTextView = view.findViewById<TextView>(R.id.workout_name_view)
         workoutNameTextView.text = workoutName
 
-        databaseHelper = DatabaseHelper(requireContext(), null)
 
-        exercises = databaseHelper.getWorkoutExercises(workoutId)
+        exercises = workoutList.find { it.workoutId == workoutId }?.exercises ?: emptyList()
         populateExercises(view)
 
         val finishButton = view.findViewById<Button>(R.id.finish_workout_button)

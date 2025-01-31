@@ -24,6 +24,8 @@ class StartWorkout : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_start_workout, container, false)
 
+        databaseHelper = DatabaseHelper(requireContext(), null)
+
         val workoutId = arguments?.getInt("workoutId") ?: 0
         val workoutName = arguments?.getString("workoutName") ?: ""
         val workoutList = arguments?.getParcelableArrayList<Workout>("workoutList") ?: mutableListOf()

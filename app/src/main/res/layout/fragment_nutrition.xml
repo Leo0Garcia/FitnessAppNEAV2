@@ -117,6 +117,17 @@
                 android:layout_gravity="center" />
 
         </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/foodItems"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:layout_weight="0.1">
+
+
+        </LinearLayout>
     </LinearLayout>
 
 

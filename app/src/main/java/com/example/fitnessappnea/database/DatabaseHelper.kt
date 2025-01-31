@@ -97,7 +97,7 @@ data class NutritionDataItem(
     val carbohydrates: Double,
     val fats: Double,
     val fibre: Double,
-    val calories: Double,
+    val calories: Double
 )
 
 class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
@@ -361,7 +361,7 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         return NutritionData(0.0, 0.0, 0.0, 0.0, 0.0, null)
     }
 
-    fun getFoodList(date: String): MutableList<NutritionDataItem> {
+    fun getFoodList(date: String): MutableList<NutritionData> {
         val db = this.readableDatabase
         val cursor = db.rawQuery(
             """
@@ -370,16 +370,17 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
             WHERE date = ?""".trimMargin(), arrayOf(date)
         )
 
-        val foodList = mutableListOf<NutritionDataItem>()
+        val foodList = mutableListOf<NutritionData>()
 
         try {
             while (cursor.moveToNext()) {
-                val data = NutritionDataItem(
+                val data = NutritionData(
                     cursor.getDouble(cursor.getColumnIndexOrThrow("protein")),
                     cursor.getDouble(cursor.getColumnIndexOrThrow("carbohydrates")),
                     cursor.getDouble(cursor.getColumnIndexOrThrow("fats")),
                     cursor.getDouble(cursor.getColumnIndexOrThrow("fibre")),
-                    cursor.getDouble(cursor.getColumnIndexOrThrow("calories"))
+                    cursor.getDouble(cursor.getColumnIndexOrThrow("calories")),
+                    cursor.getString(cursor.getColumnIndexOrThrow("foodName"))
                 )
                 foodList.add(data)
             }

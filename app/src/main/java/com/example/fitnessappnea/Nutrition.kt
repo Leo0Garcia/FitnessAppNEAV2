@@ -1,12 +1,15 @@
 package com.example.fitnessappnea
 
+import android.graphics.Color
 import android.os.Bundle
+import android.view.Gravity
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.TextView
 import com.example.fitnessappnea.database.DatabaseHelper
 import com.google.android.material.progressindicator.LinearProgressIndicator
@@ -177,5 +180,37 @@ class Nutrition : Fragment() {
                 fibreText?.text = "Fibre - " + Math.round(nutritionData.fibre).toString() + "g"
             }
         }
+
+        val foodItems = databaseHelper.getFoodList(currentDate)
+        val foodItemsContainer = view.findViewById<ViewGroup>(R.id.foodItems)
+        foodItemsContainer.removeAllViews()
+
+        for (item in foodItems) {
+            val foodView = LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(16, 16, 16, 16)
+
+                val nameTextView = TextView(context).apply {
+                    text = item.foodName
+                    textSize = 18f
+                    setTextColor(Color.WHITE)
+                    gravity = Gravity.LEFT
+                }
+
+                val nutrientsTextView = TextView(context).apply {
+                    text = "Protein: ${item.protein.toInt()}g, Carbohydrates: ${item.carbohydrates.toInt()}g, Fats: ${item.fats.toInt()}g"
+                    setTextColor(Color.GRAY)
+                    gravity = Gravity.LEFT
+                }
+
+                addView(nameTextView)
+                addView(nutrientsTextView)
+            }
+
+            foodItemsContainer.addView(foodView)
+        }
+
+
+
     }
 }

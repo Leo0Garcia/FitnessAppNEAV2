@@ -106,7 +106,7 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
 
     companion object {
         private const val DATABASE_NAME = "FitnessData.db"
-        private const val DATABASE_VERSION = 16
+        private const val DATABASE_VERSION = 17
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
@@ -163,6 +163,22 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
     foodName TEXT NOT NULL
 )"""
 
+            val SleepQuery = """CREATE TABLE Sleep (
+uuid INTEGER PRIMARY KEY AUTOINCREMENT,
+date DATE DEFAULT CURRENT_DATE,
+wakeTime TIMESTAMP,
+sleepTime TIMESTAMP,
+sleepDuration INTEGER,
+lightDuration INTEGER,
+SWSDuration INTEGER,
+REMDuration INTEGER
+)"""
+            // 55% Light sleep
+            // 20% SWS sleep
+            // 25% REM Sleep
+            // Using Whoop data and AI coach along with research
+
+            db?.execSQL(SleepQuery)
             db?.execSQL(WorkoutQuery)
             db?.execSQL(ExerciseQuery)
             db?.execSQL(CompletedWorkoutQuery)
@@ -292,25 +308,32 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
 
     fun saveCompletedWorkout(completedExercises: MutableList<Exercise>) {
         val db = this.writableDatabase
-        println(completedExercises)
 
         val SQLQuery = "INSERT INTO CompletedWorkout (workoutId) VALUES (?)"
         val SQLStatement = db.compileStatement(SQLQuery)
         SQLStatement.bindLong(1, completedExercises[0].workoutId.toLong())
-        val data = SQLStatement.execute()
+
+        // Execute insert and get the generated CompletedId
+        val completedId = SQLStatement.executeInsert()
+
+        // Check if the insert was successful
+        if (completedId == -1L) {
+            println("Error inserting workout")
+            return
+        }
 
         for (exercise in completedExercises) {
             val SQLQuery = "INSERT INTO CompletedExercise (completedId, exerciseId, setsCompleted, repsCompleted, weightUsed) VALUES (?, ?, ?, ?, ?)"
             val SQLStatement = db.compileStatement(SQLQuery)
-            SQLStatement.bindLong(1, exercise.workoutId.toLong())
+            SQLStatement.bindLong(1, completedId) // Use the retrieved CompletedId
             SQLStatement.bindLong(2, exercise.exerciseId.toLong())
             SQLStatement.bindLong(3, exercise.sets.toLong())
             SQLStatement.bindLong(4, exercise.reps.toLong())
             SQLStatement.bindDouble(5, exercise.weight)
             SQLStatement.execute()
         }
-
     }
+
 
     fun saveNutrition(date: String, protein: Double, carbohydrates: Double, fats: Double, fibre: Double, calories: Double, foodName: String): Boolean {
         val db = this.writableDatabase

@@ -189,6 +189,7 @@ class Nutrition : Fragment() {
             val foodView = LinearLayout(context).apply {
                 orientation = LinearLayout.VERTICAL
                 setPadding(16, 16, 16, 16)
+                setBackgroundResource(R.drawable.rounded_edittext_background)
 
                 val nameTextView = TextView(context).apply {
                     text = item.foodName

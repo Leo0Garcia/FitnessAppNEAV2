@@ -13,7 +13,6 @@ import android.widget.TextView
 import com.example.fitnessappnea.database.DatabaseHelper
 import com.example.fitnessappnea.database.Exercise
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import org.w3c.dom.Text
 
 
 class Workout : Fragment() {
@@ -75,13 +74,13 @@ class Workout : Fragment() {
     }
 
     private fun fetchAllCompletedWorkouts(view: View) {
-        val exercises = mutableListOf<Exercise>()
         databaseHelper = DatabaseHelper(requireContext(), null)
         val db = databaseHelper.readableDatabase
         val cursor = db.rawQuery("SELECT completedId, workoutID, completionDate FROM CompletedWorkout", null)
 
         if (cursor != null && cursor.moveToFirst()) {
             do {
+                val exercises = mutableListOf<Exercise>()
                 val completedID = cursor.getString(cursor.getColumnIndexOrThrow("completedId"))
                 val workoutID = cursor.getString(cursor.getColumnIndexOrThrow("workoutId"))
                 val completionDate = cursor.getString(cursor.getColumnIndexOrThrow("completionDate"))
@@ -108,6 +107,7 @@ class Workout : Fragment() {
                                 exerciseCursor.getString(exerciseCursor.getColumnIndexOrThrow("exerciseName"))
                         }
                         exerciseCursor.close()
+                        println("Exercise Name: $exerciseName")
                         exercises.add(Exercise(exerciseId.toInt(), workoutID.toInt(), exerciseName, setsCompleted, repsCompleted, weightUsed))
                     } while (innerCursor.moveToNext())
                     innerCursor.close()

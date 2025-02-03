@@ -1,5 +1,6 @@
 package com.example.fitnessappnea
 
+import android.app.ActionBar.LayoutParams
 import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
@@ -139,13 +140,13 @@ class Nutrition : Fragment() {
 
     private fun refreshNutritionProgressBars(view: View) {
         val proteinProgressBar = view.findViewById<LinearProgressIndicator>(R.id.proteinProgress)
-        val carbsProgressBar = view.findViewById<LinearProgressIndicator>(R.id.carbsProgress)
+        val carbsProgressBar = view.findViewById<LinearProgressIndicator>(R.id.carbohydratesProgress)
         val fatsProgressBar = view.findViewById<LinearProgressIndicator>(R.id.fatsProgress)
         val fibreProgressBar = view.findViewById<LinearProgressIndicator>(R.id.fibreProgress)
-        val proteinText = view.findViewById<TextView>(R.id.proteinText)
-        val carbsText = view.findViewById<TextView>(R.id.carbohydratesText)
-        val fatsText = view.findViewById<TextView>(R.id.fatsText)
-        val fibreText = view.findViewById<TextView>(R.id.fibreText)
+        val proteinText = view.findViewById<TextView>(R.id.proteinLabel)
+        val carbsText = view.findViewById<TextView>(R.id.carbohydratesLabel)
+        val fatsText = view.findViewById<TextView>(R.id.fatsLabel)
+        val fibreText = view.findViewById<TextView>(R.id.fibreLabel)
 
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val nutritionData = databaseHelper.getNutritionData(currentDate)
@@ -181,34 +182,44 @@ class Nutrition : Fragment() {
             }
         }
 
-        val foodItems = databaseHelper.getFoodList(currentDate)
-        val foodItemsContainer = view.findViewById<ViewGroup>(R.id.foodItems)
+        val foodItemsContainer = view.findViewById<LinearLayout>(R.id.foodItemsContainer)
         foodItemsContainer.removeAllViews()
 
+        val foodItems = databaseHelper.getFoodList(currentDate)
+
         for (item in foodItems) {
-            val foodView = LinearLayout(context).apply {
+            val foodCard = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.VERTICAL
                 setPadding(16, 16, 16, 16)
-                setBackgroundResource(R.drawable.rounded_edittext_background)
-
-                val nameTextView = TextView(context).apply {
-                    text = item.foodName
-                    textSize = 18f
-                    setTextColor(Color.WHITE)
-                    gravity = Gravity.LEFT
+                setBackgroundResource(R.drawable.rounded_background)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    setMargins(0, 8, 0, 8)
                 }
-
-                val nutrientsTextView = TextView(context).apply {
-                    text = "Protein: ${item.protein.toInt()}g, Carbohydrates: ${item.carbohydrates.toInt()}g, Fats: ${item.fats.toInt()}g"
-                    setTextColor(Color.GRAY)
-                    gravity = Gravity.LEFT
-                }
-
-                addView(nameTextView)
-                addView(nutrientsTextView)
             }
 
-            foodItemsContainer.addView(foodView)
+            var name = item.foodName
+            if (name != null) {
+                name = name.substring(0, 1).uppercase() + name.substring(1)
+            }
+
+            val nameTextView = TextView(requireContext()).apply {
+                text = name
+                textSize = 16f
+                setTextColor(Color.WHITE)
+            }
+
+            val detailsTextView = TextView(requireContext()).apply {
+                text = "Protein: ${item.protein}g, Carbs: ${item.carbohydrates}g, Fats: ${item.fats}g"
+                textSize = 14f
+                setTextColor(Color.parseColor("#b3b3b3"))
+            }
+
+            foodCard.addView(nameTextView)
+            foodCard.addView(detailsTextView)
+            foodItemsContainer.addView(foodCard)
         }
 
 

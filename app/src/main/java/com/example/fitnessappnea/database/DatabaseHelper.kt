@@ -5,7 +5,6 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.os.Parcel
 import android.os.Parcelable
-import android.view.View
 
 
 data class Workout(
@@ -209,7 +208,7 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         db?.execSQL("DROP TABLE IF EXISTS CompletedExercise")
         db?.execSQL("DROP TABLE IF EXISTS Nutrition")
         db?.execSQL("DROP TABLE IF EXISTS Sleep")
-        onCreate(db);
+        onCreate(db)
     }
 
 
@@ -242,7 +241,7 @@ ORDER BY w.workoutId, e.exerciseId; -- Order by workouts by workoutId and exerci
                 workoutMap[workoutId] = Workout(
                     workoutId,
                     cursor.getString(cursor.getColumnIndexOrThrow("workoutName")) ?: "Unnamed Workout",
-                    cursor.getString(cursor.getColumnIndexOrThrow("notes")) ?: "",
+                    null.toString(),
                     cursor.getString(cursor.getColumnIndexOrThrow("createdAt")) ?: "",
                     mutableListOf()
                 )
@@ -333,14 +332,14 @@ ORDER BY w.workoutId, e.exerciseId; -- Order by workouts by workoutId and exerci
 
         for (exercise in completedExercises) {
             // Insert each exercise into the CompletedExercise table with the related completedId
-            val SQLQuery = "INSERT INTO CompletedExercise (completedId, exerciseId, setsCompleted, repsCompleted, weightUsed) VALUES (?, ?, ?, ?, ?)"
-            val SQLStatement = db.compileStatement(SQLQuery)
-            SQLStatement.bindLong(1, completedId) // Use the retrieved CompletedId
-            SQLStatement.bindLong(2, exercise.exerciseId.toLong())
-            SQLStatement.bindLong(3, exercise.sets.toLong())
-            SQLStatement.bindLong(4, exercise.reps.toLong())
-            SQLStatement.bindDouble(5, exercise.weight)
-            SQLStatement.execute()
+            val SQLQueryExercise = "INSERT INTO CompletedExercise (completedId, exerciseId, setsCompleted, repsCompleted, weightUsed) VALUES (?, ?, ?, ?, ?)"
+            val SQLStatementExercise = db.compileStatement(SQLQueryExercise)
+            SQLStatementExercise.bindLong(1, completedId) // Use the retrieved CompletedId
+            SQLStatementExercise.bindLong(2, exercise.exerciseId.toLong())
+            SQLStatementExercise.bindLong(3, exercise.sets.toLong())
+            SQLStatementExercise.bindLong(4, exercise.reps.toLong())
+            SQLStatementExercise.bindDouble(5, exercise.weight)
+            SQLStatementExercise.execute()
         }
     }
 
@@ -363,7 +362,7 @@ ORDER BY w.workoutId, e.exerciseId; -- Order by workouts by workoutId and exerci
         return true
     }
 
-    fun getNutritionData(date: String): NutritionData? {
+    fun getNutritionData(date: String): NutritionData {
         val db = this.readableDatabase
         val cursor = db.rawQuery("""SELECT date, 
     SUM(protein) AS totalProtein, -- Sum up each macronutrient directly from all values in the table for that date
@@ -382,8 +381,10 @@ GROUP BY date;
             val fats = cursor.getDouble(cursor.getColumnIndexOrThrow("totalFats"))
             val fibre = cursor.getDouble(cursor.getColumnIndexOrThrow("totalFibre"))
             val calories = cursor.getDouble(cursor.getColumnIndexOrThrow("totalCalories"))
+            cursor.close()
             return (NutritionData(protein, carbohydrates, fats, fibre, calories, null))
         }
+        cursor.close()
         return NutritionData(0.0, 0.0, 0.0, 0.0, 0.0, null)
     }
 
@@ -505,19 +506,30 @@ GROUP BY date;
         val SQLQuery: String
         if (date == null) {
             SQLQuery = "INSERT INTO Sleep (wakeTime, sleepTime, sleepDuration, lightDuration, SWSDuration, REMDuration) VALUES (?, ?, ?, ?, ?, ?)"
+            val SQLStatement = db.compileStatement(SQLQuery)
+
+            SQLStatement.bindString(1, wakeTime)
+            SQLStatement.bindString(2, sleepTime)
+            SQLStatement.bindLong(3, sleepDuration.toLong())
+            SQLStatement.bindLong(4, lightDuration)
+            SQLStatement.bindLong(5, SWSDuration)
+            SQLStatement.bindLong(6, REMDuration)
+            SQLStatement.execute()
         } else {
             SQLQuery = "INSERT INTO Sleep (date, wakeTime, sleepTime, sleepDuration, lightDuration, SWSDuration, REMDuration) VALUES (?, ?, ?, ?, ?, ?, ?)"
+            val SQLStatement = db.compileStatement(SQLQuery)
+
+            SQLStatement.bindString(1, date)
+            SQLStatement.bindString(2, wakeTime)
+            SQLStatement.bindString(3, sleepTime)
+            SQLStatement.bindLong(4, sleepDuration.toLong())
+            SQLStatement.bindLong(5, lightDuration)
+            SQLStatement.bindLong(6, SWSDuration)
+            SQLStatement.bindLong(7, REMDuration)
+            SQLStatement.execute()
         }
 
-        val SQLStatement = db.compileStatement(SQLQuery)
 
-        SQLStatement.bindString(1, wakeTime)
-        SQLStatement.bindString(2, sleepTime)
-        SQLStatement.bindLong(3, sleepDuration.toLong())
-        SQLStatement.bindLong(4, lightDuration)
-        SQLStatement.bindLong(5, SWSDuration)
-        SQLStatement.bindLong(6, REMDuration)
-        SQLStatement.execute()
     }
 }
 

@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.fitnessappnea.database.DatabaseHelper
 import com.example.fitnessappnea.database.Exercise
 import junit.framework.TestCase.assertEquals
@@ -12,8 +13,10 @@ import junit.framework.TestCase.assertTrue
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 
-class ExampleUnitTest {
+@RunWith(AndroidJUnit4::class)
+class DatabaseTests {
 
     private lateinit var context: Context
     private lateinit var databaseHelper: DatabaseHelper
@@ -26,6 +29,13 @@ class ExampleUnitTest {
         databaseHelper = DatabaseHelper(context, null)
         db = databaseHelper.writableDatabase
 
+        // Clear the database before each test
+        db.execSQL("DELETE FROM Workout")
+        db.execSQL("DELETE FROM Exercise")
+        db.execSQL("DELETE FROM CompletedWorkout")
+        db.execSQL("DELETE FROM CompletedExercise")
+        db.execSQL("DELETE FROM Nutrition")
+        db.execSQL("DELETE FROM Sleep")
     }
 
     @After
@@ -93,16 +103,18 @@ class ExampleUnitTest {
             put("exerciseName", "Test Exercise")
             put("sets", 3)
             put("reps", 10)
+            put("weight", 0.0)
         }
         val exerciseId = db.insert("Exercise", null, exerciseValues)
         assertTrue("Exercise insert failed", exerciseId != -1L)
 
         // insert a row into the CompletedExercise table
-        val completedExerciseSQLStatement = db.compileStatement("INSERT INTO CompletedExercise (completedId, exerciseId, setsCompleted, repsCompleted) VALUES (?, ?, ?, ?)")
+        val completedExerciseSQLStatement = db.compileStatement("INSERT INTO CompletedExercise (completedId, exerciseId, setsCompleted, repsCompleted, weightUsed) VALUES (?, ?, ?, ?, ?)")
         completedExerciseSQLStatement.bindLong(1, completedId)
-        completedExerciseSQLStatement.bindLong(2, workoutId)
-        completedExerciseSQLStatement.bindLong(3, exerciseId)
-        completedExerciseSQLStatement.bindLong(4, 3)
+        completedExerciseSQLStatement.bindLong(2, exerciseId)
+        completedExerciseSQLStatement.bindLong(3, 3)
+        completedExerciseSQLStatement.bindLong(4, 10)
+        completedExerciseSQLStatement.bindDouble(5, 0.0)
 
         val completedExerciseId = completedExerciseSQLStatement.executeInsert()
         assertTrue("Completed exercise insert failed", completedExerciseId != -1L)
@@ -121,6 +133,7 @@ class ExampleUnitTest {
         assertEquals("Unexpected number of sets", 3, exercise.sets)
         assertEquals("Unexpected number of reps", 10, exercise.reps)
     }
+
     @Test
     fun testSaveCompletedWorkout() {
         val workoutValues = ContentValues().apply { // Insert a test record
@@ -190,11 +203,11 @@ class ExampleUnitTest {
         // Retrieve test data from database
         val nutritionData = databaseHelper.getNutritionData(testDate)
         assertNotNull("Nutrition data not found", nutritionData)
-        assertEquals("Unexpected protein value", 20.0, nutritionData?.protein)
-        assertEquals("Unexpected carbohydrates value", 20.0, nutritionData?.carbohydrates)
-        assertEquals("Unexpected fats value", 15.0, nutritionData?.fats)
-        assertEquals("Unexpected fibre value", 10.0, nutritionData?.fibre)
-        assertEquals("Unexpected calories value", 350.0, nutritionData?.calories)
+        assertEquals("Unexpected protein value", 20.0, nutritionData.protein)
+        assertEquals("Unexpected carbohydrates value", 20.0, nutritionData.carbohydrates)
+        assertEquals("Unexpected fats value", 15.0, nutritionData.fats)
+        assertEquals("Unexpected fibre value", 10.0, nutritionData.fibre)
+        assertEquals("Unexpected calories value", 350.0, nutritionData.calories)
 
         // Retrieve list of food items
         val foodItems = databaseHelper.getFoodList(testDate)

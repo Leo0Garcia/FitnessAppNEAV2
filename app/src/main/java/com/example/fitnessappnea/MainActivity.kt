@@ -13,6 +13,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
 
+    // Binding object instance with access to the views in the activity_main.xml layout
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,8 +29,7 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-
-
+        // Setting up the navigation menu to show specific fragments for each button
         binding.bottomNavigationView.setOnItemSelectedListener {
             when(it.itemId) {
                 R.id.workout -> replaceFragment(Workout())
@@ -42,12 +42,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
-
+    // Replace the currently shown fragment with the selected fragment
     private fun replaceFragment(fragment : Fragment){
         val fragmentManager = supportFragmentManager
         val fragmentTransaction = fragmentManager.beginTransaction()
         fragmentTransaction.replace(R.id.frame_layout,fragment)
+        // Commit changes of fragmentManager to show to the user
         fragmentTransaction.commit()
     }
 

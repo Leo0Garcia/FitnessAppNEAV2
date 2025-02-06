@@ -14,6 +14,7 @@ import com.example.fitnessappnea.database.Workout
 
 class StartWorkout : Fragment() {
 
+    // Declare variables
     private lateinit var databaseHelper: DatabaseHelper
     private lateinit var exercises: List<Exercise>
     private val completedExercises = mutableListOf<Exercise>()
@@ -26,6 +27,7 @@ class StartWorkout : Fragment() {
 
         databaseHelper = DatabaseHelper(requireContext(), null)
 
+        // Get workout details from arguments
         val workoutId = arguments?.getInt("workoutId") ?: 0
         val workoutName = arguments?.getString("workoutName") ?: ""
         val workoutList = arguments?.getParcelableArrayList<Workout>("workoutList") ?: mutableListOf()
@@ -34,6 +36,7 @@ class StartWorkout : Fragment() {
 
 
         exercises = workoutList.find { it.workoutId == workoutId }?.exercises ?: emptyList()
+        // Populate exercise list
         populateExercises(view)
 
         val finishButton = view.findViewById<Button>(R.id.finish_workout_button)
@@ -47,6 +50,7 @@ class StartWorkout : Fragment() {
     private fun populateExercises(view: View) {
         val exerciseContainer = view.findViewById<LinearLayout>(R.id.exerciseContainer)
 
+        // Iterate through exercises and add them to the exercise container
         for (exercise in exercises) {
             val exerciseTextView = createTextView(exercise.exerciseName, 20f, R.color.textColour, true)
             detachViewIfNeeded(exerciseTextView)
@@ -56,12 +60,14 @@ class StartWorkout : Fragment() {
             detachViewIfNeeded(labelsRow)
             exerciseContainer.addView(labelsRow)
 
+            // Iterate through sets and append to the current exercise
             for (setNumber in 1..exercise.sets) {
                 val setRow = createSetRow(exercise, setNumber)
                 detachViewIfNeeded(setRow)
                 exerciseContainer.addView(setRow)
             }
 
+            // Add a spacer for formatting
             val spacerView = View(requireContext()).apply {
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, 48
@@ -72,11 +78,13 @@ class StartWorkout : Fragment() {
         }
     }
 
+    // Helper function to remove a view if it's already attached to a parent
     private fun detachViewIfNeeded(view: View) {
         val parent = view.parent as? ViewGroup
         parent?.removeView(view)
     }
 
+    // Helper function to create a TextView
     private fun createTextView(text: String, textSize: Float, colorRes: Int, isBold: Boolean): TextView {
         return TextView(requireContext()).apply {
             this.text = text
@@ -87,6 +95,7 @@ class StartWorkout : Fragment() {
         }
     }
 
+    // Add labels to the collumns for reps weight
     private fun createLabelsRow(): LinearLayout {
         return LinearLayout(requireContext()).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -114,6 +123,7 @@ class StartWorkout : Fragment() {
                 gravity = android.view.Gravity.START
             }
 
+            // add everything to the view
             addView(spacer)
             addView(repTextView)
             addView(weightTextView)
@@ -122,18 +132,20 @@ class StartWorkout : Fragment() {
     }
 
 
+    // create the spacer view for formatting
     private fun createSpacer(weight: Float): View {
         return TextView(requireContext()).apply {
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, weight)
         }
     }
 
+    // Create a set row for each set
     private fun createSetRow(exercise: Exercise, setNumber: Int): LinearLayout {
         return LinearLayout(requireContext()).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(0, 16, 0, 16)
 
-            weightSum = 3f // 3 collumns
+            weightSum = 3f // 3 columns
 
             val setTextView = createTextView("$setNumber", 24f, R.color.setColour, true).apply {
                 layoutParams = LinearLayout.LayoutParams(
@@ -199,8 +211,7 @@ class StartWorkout : Fragment() {
         }
     }
 
-
-
+    // Subroutine to create editable text view (used for weight)
     private fun createEditableTextView(defaultValue: String, marginEnd: Int): EditText {
         return EditText(requireContext()).apply {
             setText(defaultValue);
@@ -247,18 +258,20 @@ class StartWorkout : Fragment() {
                 exerciseId = exercise.exerciseId,
                 exerciseName = exercise.exerciseName,
                 sets = exercise.sets,
-                reps = exercise.reps, // Default until calculated
-                weight = exercise.weight, // Default until calculated
+                reps = exercise.reps,
+                weight = exercise.weight,
                 workoutId = workoutId
             )
             var totalReps = 0
             var totalWeight = 0.0
+            // Fetch all inputted data fo each set
             for (setNumber in 1..exercise.sets) {
+                // Use previously set tags to find views
                 val repEditText = parentLayout.findViewWithTag<EditText>("rep-$exercise-$setNumber")
                 val weightEditText = parentLayout.findViewWithTag<EditText>("weight-$exercise-$setNumber")
                 val setCheckBox = parentLayout.findViewWithTag<CheckBox>("checkbox-$exercise-$setNumber")
 
-                if (setCheckBox.isChecked) {
+                if (setCheckBox.isChecked) { // If exericse has been completed
                     val reps = repEditText.text.toString().toIntOrNull() ?: 0
                     val weight = weightEditText.text.toString().toDoubleOrNull() ?: 0.0
                     totalReps += reps
@@ -274,6 +287,6 @@ class StartWorkout : Fragment() {
         databaseHelper.saveCompletedWorkout(completedExercises)
 
         Toast.makeText(requireContext(), "Workout completed and saved!", Toast.LENGTH_SHORT).show()
-        parentFragmentManager.popBackStack() // Navigate back
+        parentFragmentManager.popBackStack() // Navigate back using the stack
     }
 }

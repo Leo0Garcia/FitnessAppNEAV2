@@ -1,7 +1,6 @@
 package com.example.fitnessappnea
 
 import android.app.TimePickerDialog
-import android.graphics.Color
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -11,11 +10,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.example.fitnessappnea.database.DatabaseHelper
 import com.github.mikephil.charting.charts.BarChart
-import com.github.mikephil.charting.components.XAxis
-import com.github.mikephil.charting.data.BarData
-import com.github.mikephil.charting.data.BarDataSet
-import com.github.mikephil.charting.data.BarEntry
-import com.github.mikephil.charting.formatter.ValueFormatter
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date

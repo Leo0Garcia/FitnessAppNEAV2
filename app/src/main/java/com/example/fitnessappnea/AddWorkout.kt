@@ -67,11 +67,6 @@ class AddWorkout : Fragment() {
             parentFragmentManager.popBackStack()
         }
 
-//        var backButton: Button = view.findViewById(R.id.back_button)
-//        backButton.setOnClickListener {
-//            parentFragmentManager.popBackStack()
-//        }
-
         return view
     }
 

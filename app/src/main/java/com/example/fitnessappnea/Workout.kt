@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
+import com.example.fitnessappnea.database.CompletedWorkout
 import com.example.fitnessappnea.database.DatabaseHelper
 import com.example.fitnessappnea.database.Exercise
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -26,39 +27,50 @@ class Workout : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         // Inflate the layout for this fragment
         val view: View = inflater.inflate(R.layout.fragment_workout, container, false)
 
+        // Clear the workout list
         val workoutListLayout: LinearLayout = view.findViewById(R.id.workout_list)
         workoutListLayout.removeAllViews()
 
+        // Add workout button and set onClick listener
         val addStartButton: FloatingActionButton = view.findViewById(R.id.addStartWorkout)
         addStartButton.setOnClickListener {
             showPopup(addStartButton)
         }
-        fetchAllCompletedWorkouts(view)
+        // Initialise databaaseHelper class
+        println("refreshing")
+        databaseHelper = DatabaseHelper(requireContext(), null)
+        val completedWorkouts = databaseHelper.fetchAllCompletedWorkouts()
+        println(completedWorkouts)
+        val sortedCompletedWorkouts = mergeSortByDate(completedWorkouts)
+        println(sortedCompletedWorkouts)
+        parseCompletedWorkouts(view, sortedCompletedWorkouts)
         return view
     }
 
     private fun showPopup(button: View) {
+        // Create a popup menu when floating "+" button click
         val popupMenu = PopupMenu(requireContext(), button)
         popupMenu.menuInflater.inflate(R.menu.menu_workout_popup, popupMenu.menu)
 
-        // Listener
+        // Listen for menu item click
         popupMenu.setOnMenuItemClickListener { item: MenuItem ->
             when (item.itemId) {
                 R.id.menu_new_workout -> {
-                    // Go to AddWorkout frag
+                    // Go to AddWorkout fragment
                     val fragment = AddWorkout()
                     val transaction = parentFragmentManager.beginTransaction()
                     transaction.replace(R.id.frame_layout, fragment)
+                    // Using a stack so using hardware back button goes to previous page by popping an item off the stack
                     transaction.addToBackStack(null)
                     transaction.commit()
                     true
                 }
                 R.id.menu_start_workout -> {
-                    // Go to StartWorkout frag
+                    // Go to StartWorkout fragment
                     val fragment = SelectWorkout()
                     val transaction = parentFragmentManager.beginTransaction()
                     transaction.replace(R.id.frame_layout, fragment)
@@ -73,70 +85,22 @@ class Workout : Fragment() {
         popupMenu.show()
     }
 
-    private fun fetchAllCompletedWorkouts(view: View) {
-        databaseHelper = DatabaseHelper(requireContext(), null)
-        val db = databaseHelper.readableDatabase
-        val cursor = db.rawQuery("SELECT completedId, workoutID, completionDate FROM CompletedWorkout", null)
-
-        if (cursor != null && cursor.moveToFirst()) {
-            do {
-                val exercises = mutableListOf<Exercise>()
-                val completedID = cursor.getString(cursor.getColumnIndexOrThrow("completedId"))
-                val workoutID = cursor.getString(cursor.getColumnIndexOrThrow("workoutId"))
-                val completionDate = cursor.getString(cursor.getColumnIndexOrThrow("completionDate"))
-
-                val cursorWorkout = db.rawQuery("SELECT workoutName FROM Workout WHERE workoutId = ?", arrayOf(workoutID))
-                var setsCompleted = 0
-                var repsCompleted = 0
-                var weightUsed = 0.0
-
-
-                // Fetch all the completed exercises
-                val innerCursor = db.rawQuery("SELECT exerciseId, setsCompleted, repsCompleted, weightUsed FROM CompletedExercise WHERE completedId = ?", arrayOf(completedID))
-                if (innerCursor.moveToFirst()) {
-                    do {
-                        val exerciseId = innerCursor.getString(innerCursor.getColumnIndexOrThrow("exerciseId"))
-                        setsCompleted = innerCursor.getInt(innerCursor.getColumnIndexOrThrow("setsCompleted"))
-                        repsCompleted = innerCursor.getInt(innerCursor.getColumnIndexOrThrow("repsCompleted"))
-                        weightUsed = innerCursor.getDouble(innerCursor.getColumnIndexOrThrow("weightUsed"))
-                        // Fetch the exercise name
-                        val exerciseCursor = db.rawQuery("SELECT exerciseName FROM Exercise WHERE exerciseId = ?", arrayOf(exerciseId))
-                        var exerciseName: String = ""
-                        if (exerciseCursor.moveToFirst()) {
-                            exerciseName =
-                                exerciseCursor.getString(exerciseCursor.getColumnIndexOrThrow("exerciseName"))
-                        }
-                        exerciseCursor.close()
-                        println("Exercise Name: $exerciseName")
-                        exercises.add(Exercise(exerciseId.toInt(), workoutID.toInt(), exerciseName, setsCompleted, repsCompleted, weightUsed))
-                    } while (innerCursor.moveToNext())
-                    innerCursor.close()
-                }
-
-                if (cursorWorkout.moveToFirst()) {
-                    val workoutName = cursorWorkout.getString(cursorWorkout.getColumnIndexOrThrow("workoutName"))
-                    addWorkoutToLayout(view, workoutName, completionDate, exercises)
-                }
-
-                cursorWorkout.close()
-            } while (cursor.moveToNext())
-        } else {
-            println("No workouts found")
+    private fun parseCompletedWorkouts(view: View, completedWorkouts: List<CompletedWorkout>) {
+        for (workout in completedWorkouts) {
+            addWorkoutToLayout(view, workout.workoutName, workout.completionDate, workout.exercises.toMutableList())
         }
-
-        cursor?.close()
     }
 
     private fun addWorkoutToLayout(view: View, name: String, date: String, exercises: MutableList<Exercise>) {
         // Inflate the custom layout for each workout
         val workoutView = LayoutInflater.from(context).inflate(R.layout.workout_row, null)
 
-        // Set data to the TextViews in the inflated layout
         workoutView.findViewById<TextView>(R.id.workout_name).text = name
 
 
         val exerciseContainer = workoutView.findViewById<LinearLayout>(R.id.exercise_container)
         exerciseContainer.removeAllViews()
+        // Iterate through each exercise and add it to the exercise container
         for (exercise in exercises) {
             val exerciseTextView = TextView(exerciseContainer.context).apply {
                 this.text = "${exercise.sets}x ${exercise.exerciseName}"
@@ -161,5 +125,43 @@ class Workout : Fragment() {
         // Add the inflated layout to the workout list
         val workoutList: LinearLayout = view.findViewById(R.id.workout_list)
         workoutList.addView(workoutView)
+    }
+
+    fun mergeSortByDate(completedWorkouts: List<CompletedWorkout>): List<CompletedWorkout> {
+        if (completedWorkouts.size <= 1) { // 0 or 1 elements in list, hence no need to sort
+            return completedWorkouts
+        }
+
+        val middle = completedWorkouts.size / 2 // Find middle value
+        val left = completedWorkouts.subList(0, middle) // Split list from middle to beginning
+        val right = completedWorkouts.subList(middle, completedWorkouts.size) // Split list from middle to end
+        return merge(mergeSortByDate(left), mergeSortByDate(right)) // Iteratively sort both halves and merge
+    }
+
+    private fun merge(left: List<CompletedWorkout>, right: List<CompletedWorkout>): List<CompletedWorkout> {
+        var i = 0 // Initialise indexes
+        var j = 0
+        val result = mutableListOf<CompletedWorkout>()
+
+        // Compare elements from both lists and merge them in sorted order
+        while (i < left.size && j < right.size) { // Iterate through both lists
+            if (left[i].completionDate >= right[j].completionDate) { // Flipped comparison to sort descending
+                result.add(left[i]) // add smaller element to list
+                i++
+            } else {
+                result.add(right[j]) // Add smaller element to list
+                j++
+            }
+        }
+
+        // Add remaining elements from left or right list
+        if (i < left.size) {
+            result.addAll(left.subList(i, left.size))
+        }
+        if (j < right.size) {
+            result.addAll(right.subList(j, right.size))
+        }
+
+        return result // return sorted list
     }
 }

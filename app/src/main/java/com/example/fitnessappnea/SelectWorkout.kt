@@ -39,7 +39,7 @@ class SelectWorkout : Fragment() {
         }
 
         // Fetch all workouts
-        var workoutList = databaseHelper.NEWgetAllWorkouts()
+        var workoutList = databaseHelper.getAllWorkouts()
 
 
         var workouts = mutableListOf<Pair<Int, String>>()
@@ -98,6 +98,8 @@ class SelectWorkout : Fragment() {
             putString("workoutName", workoutName)
             putParcelableArrayList("workoutList", ArrayList(workoutList))
         }
+
+        // IN DOCUMENTATION TALK ABOUT HOW I HAD TO CHANGE THE CUSTOM DATA TYPES TO BE PARCELABLE
 
         fragment.arguments = bundle
 

@@ -120,7 +120,7 @@ class AddWorkout : Fragment() {
     private fun saveWorkout() {
         val workoutName = workoutNameEditText.text.toString()
         val formatter = SimpleDateFormat("dd/MM/yyyy HH:mm")
-        val workoutDate = formatter.format(Calendar.getInstance().time)
+        // val workoutDate = formatter.format(Calendar.getInstance().time)
 
         val db = databaseHelper.writableDatabase
         db.beginTransaction()

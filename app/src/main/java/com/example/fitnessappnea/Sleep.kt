@@ -63,9 +63,10 @@ class Sleep : Fragment() {
                     }
 
                     val sleepDuration = wakeMinutes - sleepMinutes
+                    val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
                     Toast.makeText(requireContext(), "Sleep: $sleepTime, Wake: $wakeTime", Toast.LENGTH_LONG).show()
-                    databaseHelper.saveSleepData(sleepTime, wakeTime, sleepDuration)
+                    databaseHelper.saveSleepData(date = currentDate, sleepTime, wakeTime, sleepDuration)
                 }
             }
         }

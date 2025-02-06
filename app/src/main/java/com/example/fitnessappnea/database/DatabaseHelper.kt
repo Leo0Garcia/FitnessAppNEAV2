@@ -114,7 +114,7 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
 
 
     companion object {
-        private const val DATABASE_NAME = "FitnessData.db"
+        const val DATABASE_NAME = "FitnessData.db"
         private const val DATABASE_VERSION = 20
     }
 
@@ -220,7 +220,6 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
 SELECT 
     w.workoutId,
     w.workoutName,
-    w.notes,
     w.createdAt,
     e.exerciseId,
     e.exerciseName,
@@ -491,7 +490,7 @@ GROUP BY date;
         return sleepData
     }
 
-    fun saveSleepData(sleepTime: String, wakeTime: String, sleepDuration: Int) {
+    fun saveSleepData(date: String? = null, sleepTime: String, wakeTime: String, sleepDuration: Int) {
         // 55% Light sleep
         // 20% SWS sleep
         // 25% REM Sleep
@@ -503,7 +502,12 @@ GROUP BY date;
 
         val db = this.writableDatabase
         // Insert all data (will be saved with the current date as default)
-        val SQLQuery = "INSERT INTO Sleep (wakeTime, sleepTime, sleepDuration, lightDuration, SWSDuration, REMDuration) VALUES (?, ?, ?, ?, ?, ?)"
+        val SQLQuery: String
+        if (date == null) {
+            SQLQuery = "INSERT INTO Sleep (wakeTime, sleepTime, sleepDuration, lightDuration, SWSDuration, REMDuration) VALUES (?, ?, ?, ?, ?, ?)"
+        } else {
+            SQLQuery = "INSERT INTO Sleep (date, wakeTime, sleepTime, sleepDuration, lightDuration, SWSDuration, REMDuration) VALUES (?, ?, ?, ?, ?, ?, ?)"
+        }
 
         val SQLStatement = db.compileStatement(SQLQuery)
 

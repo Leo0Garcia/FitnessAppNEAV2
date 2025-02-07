@@ -1,6 +1,7 @@
 package com.example.fitnessappnea
 
 import android.app.TimePickerDialog
+import android.graphics.Color
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -9,7 +10,10 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.example.fitnessappnea.database.DatabaseHelper
-import com.github.mikephil.charting.charts.BarChart
+import com.example.fitnessappnea.database.SleepData
+import com.github.mikephil.charting.charts.LineChart
+import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.data.*
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -30,18 +34,91 @@ class Sleep : Fragment() {
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val data = databaseHelper.getSleepData(currentDate)
 //        if (data == null) {
-//            showSleepTimeDialog()
+            showSleepTimeDialog()
 //        }
 
 
-        val barChart: BarChart = view.findViewById(R.id.sleepChart)
+        val chart: LineChart = view.findViewById(R.id.sleepChart)
+        val weekData = databaseHelper.get7DaySleepData()
 
-        // need to do
+        println(weekData)
+
+        if (data != null) {
+            displayChart(chart, weekData)
+        }
 
         return view
     }
 
 
+    private fun displayChart(chart: LineChart, data: List<SleepData>) {
+        val sleepEntries = mutableListOf<Entry>()
+        val wakeEntries = mutableListOf<Entry>()
+        var index = 0
+
+        for (item in data) {
+            val sleepTime = SimpleDateFormat("HH:mm", Locale.getDefault()).parse(item.sleepTime)
+            val wakeTime = SimpleDateFormat("HH:mm", Locale.getDefault()).parse(item.wakeTime)
+
+            if (sleepTime != null && wakeTime != null) {
+                println(sleepTime.time.toFloat())
+                println(wakeTime.time.toFloat())
+                sleepEntries.add(Entry(index.toFloat(), sleepTime.time.toFloat()))
+                wakeEntries.add(Entry(index.toFloat(), wakeTime.time.toFloat()))
+                index++
+            }
+        }
+
+        val sleepDataSet = LineDataSet(sleepEntries, "Sleep Time").apply {
+            color = Color.BLUE
+            valueTextColor = Color.WHITE
+            valueTextSize = 12f
+            mode = LineDataSet.Mode.CUBIC_BEZIER
+        }
+        val wakeDataSet = LineDataSet(wakeEntries, "Wake Time").apply {
+            color = Color.GREEN
+            valueTextColor = Color.WHITE
+            valueTextSize = 12f
+            mode = LineDataSet.Mode.CUBIC_BEZIER
+        }
+
+        sleepDataSet.color = Color.BLUE
+        wakeDataSet.color = Color.GREEN
+
+        val lineData = LineData(sleepDataSet, wakeDataSet).apply {
+            setValueTextColor(Color.WHITE)
+            setValueTextSize(12f)
+        }
+        chart.data = lineData
+        chart.xAxis.position = XAxis.XAxisPosition.BOTTOM
+        chart.axisRight.isEnabled = false
+
+        chart.apply {
+            xAxis.apply {
+                position = XAxis.XAxisPosition.BOTTOM
+                setDrawGridLines(false)
+                textColor = Color.DKGRAY
+                textSize = 12f
+                setDrawAxisLine(true)
+            }
+            axisLeft.apply {
+                setDrawGridLines(false)
+                textColor = Color.LTGRAY
+                textSize = 12f
+                setDrawAxisLine(true)
+            }
+
+            axisRight.isEnabled = false
+
+            legend.apply {
+                textColor = Color.DKGRAY
+                textSize = 12f
+
+            }
+        }
+
+        chart.invalidate()
+    }
 
     private fun showSleepTimeDialog() {
         val builder = AlertDialog.Builder(requireContext())

@@ -532,5 +532,3 @@ GROUP BY date;
 
     }
 }
-
-

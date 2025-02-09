@@ -41,12 +41,9 @@ class Workout : Fragment() {
             showPopup(addStartButton)
         }
         // Initialise databaaseHelper class
-        println("refreshing")
         databaseHelper = DatabaseHelper(requireContext(), null)
         val completedWorkouts = databaseHelper.fetchAllCompletedWorkouts()
-        println(completedWorkouts)
         val sortedCompletedWorkouts = mergeSortByDate(completedWorkouts)
-        println(sortedCompletedWorkouts)
         parseCompletedWorkouts(view, sortedCompletedWorkouts)
         return view
     }
@@ -81,7 +78,6 @@ class Workout : Fragment() {
                 else -> false
             }
         }
-
         popupMenu.show()
     }
 
@@ -127,41 +123,44 @@ class Workout : Fragment() {
         workoutList.addView(workoutView)
     }
 
-    fun mergeSortByDate(completedWorkouts: List<CompletedWorkout>): List<CompletedWorkout> {
-        if (completedWorkouts.size <= 1) { // 0 or 1 elements in list, hence no need to sort
-            return completedWorkouts
+    private fun mergeSortByDate(workouts: List<CompletedWorkout>): List<CompletedWorkout> {
+        // 1 or 0 elements and the list doesnt need to be sorted
+        if (workouts.size <= 1) {
+            return workouts
         }
 
-        val middle = completedWorkouts.size / 2 // Find middle value
-        val left = completedWorkouts.subList(0, middle) // Split list from middle to beginning
-        val right = completedWorkouts.subList(middle, completedWorkouts.size) // Split list from middle to end
-        return merge(mergeSortByDate(left), mergeSortByDate(right)) // Iteratively sort both halves and merge
+        val mid = workouts.size / 2
+        val leftSorted = mergeSortByDate(workouts.subList(0, mid)) // Sort the left half using function recursion
+        val rightSorted = mergeSortByDate(workouts.subList(mid, workouts.size)) // Sort the right half
+
+        return merge(leftSorted, rightSorted) // Merge the sorted halves
     }
 
     private fun merge(left: List<CompletedWorkout>, right: List<CompletedWorkout>): List<CompletedWorkout> {
-        var i = 0 // Initialise indexes
-        var j = 0
-        val result = mutableListOf<CompletedWorkout>()
+        var leftIndex = 0
+        var rightIndex = 0
+        val mergedList = mutableListOf<CompletedWorkout>()
 
-        // Compare elements from both lists and merge them in sorted order
-        while (i < left.size && j < right.size) { // Iterate through both lists
-            if (left[i].completionDate >= right[j].completionDate) { // Flipped comparison to sort descending
-                result.add(left[i]) // add smaller element to list
-                i++
+        // Merge both sorted lists in descending order based on completion data.
+        while (leftIndex < left.size && rightIndex < right.size) {
+            if (left[leftIndex].completionDate >= right[rightIndex].completionDate) {
+                mergedList.add(left[leftIndex])
+                leftIndex++
             } else {
-                result.add(right[j]) // Add smaller element to list
-                j++
+                mergedList.add(right[rightIndex])
+                rightIndex++
             }
         }
 
-        // Add remaining elements from left or right list
-        if (i < left.size) {
-            result.addAll(left.subList(i, left.size))
+        // Append any remaining elements.
+        if (leftIndex < left.size) {
+            mergedList.addAll(left.subList(leftIndex, left.size))
         }
-        if (j < right.size) {
-            result.addAll(right.subList(j, right.size))
+        if (rightIndex < right.size) {
+            mergedList.addAll(right.subList(rightIndex, right.size))
         }
 
-        return result // return sorted list
+        return mergedList
     }
+
 }

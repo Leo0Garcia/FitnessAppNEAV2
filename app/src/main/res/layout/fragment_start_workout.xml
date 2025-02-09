@@ -5,11 +5,13 @@
     android:layout_height="match_parent"
     tools:context=".StartWorkout">
 
+    <!-- Vertical linear layout for the whole workout-->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <!-- Text for workout name-->
         <TextView
             android:id="@+id/workout_name_view"
             android:layout_width="wrap_content"
@@ -20,10 +22,12 @@
             android:textStyle="bold"
             android:padding="16dp"/>
 
+        <!-- ScrollView enables the exercises to be scrolled through-->
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
+            <!-- Linear layout for each exercise to be displayed within-->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -36,6 +40,7 @@
                     android:padding="16dp">
                 </LinearLayout>
 
+                <!-- Finish workout button below all exercises-->
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/finish_workout_button"
                     android:layout_width="match_parent"

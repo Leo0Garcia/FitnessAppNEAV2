@@ -5,12 +5,14 @@
     android:layout_height="match_parent"
     tools:context=".SelectWorkout">
 
+    <!-- Vertical linear layout to contain each workout button-->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Back navigation button -->
         <Button
             android:id="@+id/back_to_workout_button"
             android:layout_width="wrap_content"
@@ -24,17 +26,12 @@
             android:background="?android:attr/selectableItemBackground"
             android:contentDescription="Go back to workout page" />
 
-
-
-
+        <!-- Workout name input -->
         <LinearLayout
-            android:id="@+id/exercise_container"
+            android:id="@+id/workout_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical" />
-
-
-
     </LinearLayout>
 
 </FrameLayout>

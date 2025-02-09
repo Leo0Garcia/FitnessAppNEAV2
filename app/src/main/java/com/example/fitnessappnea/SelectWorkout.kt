@@ -15,7 +15,7 @@ import com.example.fitnessappnea.database.Workout
 
 
 class SelectWorkout : Fragment() {
-    private lateinit var exerciseContainer: LinearLayout
+    private lateinit var workoutContainer: LinearLayout
 
 
     private lateinit var databaseHelper: DatabaseHelper
@@ -82,11 +82,11 @@ class SelectWorkout : Fragment() {
             workoutButtons.add(button)
         }
 
-        exerciseContainer = view.findViewById(R.id.exercise_container)
+        workoutContainer = view.findViewById(R.id.workout_container)
 
         // Add buttons to the container
         for (button in workoutButtons) {
-            exerciseContainer.addView(button)
+            workoutContainer.addView(button)
         }
 
         return view

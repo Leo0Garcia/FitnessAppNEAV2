@@ -3,12 +3,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!-- Linear layout for each component -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Back navigation button -->
         <Button
             android:id="@+id/back_to_workout_button"
             android:layout_width="wrap_content"
@@ -22,6 +24,7 @@
             android:background="?android:attr/selectableItemBackground"
             android:contentDescription="Go back to workout page" />
 
+        <!-- Workout name input -->
         <EditText
             android:id="@+id/workout_name"
             android:layout_width="match_parent"
@@ -31,12 +34,14 @@
             android:textColor="#FFFFFF"
             />
 
+        <!-- Vertical linear layout to contain each exercise input -->
         <LinearLayout
             android:id="@+id/exercise_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical" />
 
+        <!-- Add exercise button -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/add_exercise_button"
             android:layout_width="match_parent"
@@ -49,6 +54,7 @@
             android:textStyle="bold"
             android:textColor="@color/colorAccent" />
 
+        <!-- Save workout button -->
         <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/save_workout_button"
             android:layout_width="match_parent"

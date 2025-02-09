@@ -11,6 +11,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <!-- Page label-->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -21,6 +22,7 @@
             android:gravity=""
             android:padding="24dp"/>
 
+        <!-- ScrollView so the user can scroll through completed exercises -->
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -35,6 +37,7 @@
         </ScrollView>
     </LinearLayout>
 
+    <!-- button to show New Workout or Start Workout menu -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/addStartWorkout"
         android:layout_width="wrap_content"
@@ -44,6 +47,4 @@
         app:backgroundTint="@color/colorAccent"
         app:srcCompat="@drawable/plus_solid"
         app:fabSize="normal" />
-
-
 </FrameLayout>

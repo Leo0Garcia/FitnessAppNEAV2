@@ -1,10 +1,7 @@
 package com.example.fitnessappnea
 
-import android.icu.util.Calendar
-import android.os.Build
 import android.os.Bundle
 import android.text.Editable
-import android.text.Layout
 import android.text.TextWatcher
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -16,7 +13,6 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import com.example.fitnessappnea.database.DatabaseHelper
 import com.example.fitnessappnea.database.Exercise
-import java.text.SimpleDateFormat
 
 
 class AddWorkout : Fragment() {

@@ -1,9 +1,7 @@
 package com.example.fitnessappnea
 
-import android.app.ActionBar.LayoutParams
 import android.graphics.Color
 import android.os.Bundle
-import android.view.Gravity
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -22,10 +20,8 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import kotlin.math.round
 
 // Define classes for json parsing
-
 data class Food(
     val food_name: String,
     val serving_qty: Int,
@@ -41,8 +37,6 @@ data class FoodResponse(
     val foods: List<Food>
 )
 
-
-
 class Nutrition : Fragment() {
 
     private lateinit var databaseHelper: DatabaseHelper
@@ -53,23 +47,25 @@ class Nutrition : Fragment() {
     ): View {
         val view: View = inflater.inflate(R.layout.fragment_nutrition, container, false)
 
+        // Get components from XML
         val nutritionText: EditText = view.findViewById(R.id.nutritionInput)
         val submitButton: Button = view.findViewById(R.id.submitNutritionButton)
 
         databaseHelper = DatabaseHelper(requireContext(), null)
 
+        // Populate the nutrition progress bars
         refreshNutritionProgressBars(view)
 
-        submitButton.setOnClickListener {
+        submitButton.setOnClickListener { // set OnClick listener for submit button
             val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-            val inputQuery = nutritionText.text.toString()
+            val inputQuery = nutritionText.text.toString() // Get the user inputted food string
 
             // Make the network request
             requestNutritionData(inputQuery) { response ->
                 response?.let {
                     val parseResult = parseResponse(it)
 
-                    // Save the data into the database
+                    // iterate through each food item and save into database
                     parseResult.foods.forEach { food ->
                         databaseHelper.saveNutrition(
                             currentDate,
@@ -82,7 +78,8 @@ class Nutrition : Fragment() {
                         )
                     }
 
-                    requireActivity().runOnUiThread {
+                    // Refresh the nutrition progress bars
+                    requireActivity().runOnUiThread { // Using the UI thread as the UI cannot be accessed fro a background thread (which is what the request is executed on)
                         refreshNutritionProgressBars(view)
                     }
 
@@ -96,35 +93,31 @@ class Nutrition : Fragment() {
     }
 
     private fun requestNutritionData(query: String, callback: (String?) -> Unit) {
-        val client = OkHttpClient()
+        val client = OkHttpClient() // Use an OkHTTPClient to make the request
         val url = "https://trackapi.nutritionix.com/v2/natural/nutrients"
 
-        val jsonBody = """
-        {
+        // Construct json body to be sent to Nutritionix
+        val jsonBody = """{
             "query": "$query"
-        }
-        """.trimIndent()
+        }""".trimIndent()
 
         val requestBody = jsonBody.toRequestBody("application/json; charset=utf-8".toMediaType())
-
-        val request = Request.Builder()
+        val request = Request.Builder() // Build the request
             .url(url)
             .addHeader("x-app-key", "37f974febc324eb24a49f3a748098660")
             .addHeader("x-app-id", "6ca8f34c")
             .post(requestBody)
             .build()
 
-        client.newCall(request).enqueue(object : Callback {
+        client.newCall(request).enqueue(object : Callback { // Post the request to Nutritionix
             override fun onFailure(call: Call, e: IOException) {
                 println("Request failed: ${e.message}")
                 callback(null)
             }
-
             override fun onResponse(call: Call, response: Response) {
                 if (response.isSuccessful) {
                     val responseBody = response.body?.string()
-                    println("Response: $responseBody")
-                    callback(responseBody)
+                    callback(responseBody) // Pass the response to the callback function
                 } else {
                     println("Request failed with code: ${response.code}")
                     callback(null)
@@ -139,6 +132,7 @@ class Nutrition : Fragment() {
     }
 
     private fun refreshNutritionProgressBars(view: View) {
+        // Get all progress and label components from XML file
         val proteinProgressBar = view.findViewById<LinearProgressIndicator>(R.id.proteinProgress)
         val carbsProgressBar = view.findViewById<LinearProgressIndicator>(R.id.carbohydratesProgress)
         val fatsProgressBar = view.findViewById<LinearProgressIndicator>(R.id.fatsProgress)
@@ -151,6 +145,7 @@ class Nutrition : Fragment() {
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val nutritionData = databaseHelper.getNutritionData(currentDate)
 
+        // Update all macronutrient progess bars and labels
         if (nutritionData != null) {
             if (nutritionData.protein.toInt() < 70) {
                 proteinProgressBar?.progress = nutritionData.protein.toInt()
@@ -187,6 +182,7 @@ class Nutrition : Fragment() {
 
         val foodItems = databaseHelper.getFoodList(currentDate)
 
+        // Iterate through each food item and display it into the food items container
         for (item in foodItems) {
             val foodCard = LinearLayout(requireContext()).apply {
                 orientation = LinearLayout.VERTICAL
@@ -205,6 +201,7 @@ class Nutrition : Fragment() {
                 name = name.substring(0, 1).uppercase() + name.substring(1)
             }
 
+            // Create a text views to display food information
             val nameTextView = TextView(requireContext()).apply {
                 text = name
                 textSize = 16f
@@ -217,12 +214,10 @@ class Nutrition : Fragment() {
                 setTextColor(Color.parseColor("#b3b3b3"))
             }
 
+            // Add everything to their respective view
             foodCard.addView(nameTextView)
             foodCard.addView(detailsTextView)
             foodItemsContainer.addView(foodCard)
         }
-
-
-
     }
 }

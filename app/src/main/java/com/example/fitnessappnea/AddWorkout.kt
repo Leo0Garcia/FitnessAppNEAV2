@@ -15,17 +15,8 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.Toast
 import com.example.fitnessappnea.database.DatabaseHelper
+import com.example.fitnessappnea.database.Exercise
 import java.text.SimpleDateFormat
-
-private data class Exercise(
-    val name: String,
-    val sets: Int,
-    val reps: Int
-)
-//data class WorkoutContainer(
-//    val name: String,
-//    val exercises: List<Exercise>
-//)
 
 
 class AddWorkout : Fragment() {
@@ -46,37 +37,42 @@ class AddWorkout : Fragment() {
         // Inflate the layout for this fragment
         var view = inflater.inflate(R.layout.fragment_add_workout, container, false)
 
-        databaseHelper = DatabaseHelper(requireContext(), null)
+        databaseHelper = DatabaseHelper(requireContext(), null) // Initialise databaseHelper
 
+        // Find components from XML file
         workoutNameEditText = view.findViewById(R.id.workout_name)
         exerciseContainer = view.findViewById(R.id.exercise_container)
 
 
+        // Setup addExercise button
         var addExerciseButton: Button = view.findViewById(R.id.add_exercise_button)
-        addExerciseButton.setOnClickListener {
+        addExerciseButton.setOnClickListener { // Define on click listener to add exercise container
             addExerciseRow()
         }
 
+        // Setup saveWorkout button
         var saveWorkoutButton: Button = view.findViewById(R.id.save_workout_button)
-        saveWorkoutButton.setOnClickListener {
+        saveWorkoutButton.setOnClickListener { // Define on click listener to process and save workout data
             saveWorkout()
         }
 
+        // Setup back button
         var backButton: Button = view.findViewById(R.id.back_to_workout_button)
-        backButton.setOnClickListener {
-            parentFragmentManager.popBackStack()
+        backButton.setOnClickListener { // Define on click listener to go back to workout list
+            parentFragmentManager.popBackStack() // Pop the current page off of the stack to go back
         }
 
         return view
     }
 
     private fun addExerciseRow() {
+        // Inflate each component into the container
         val exerciseLayout = LayoutInflater.from(context).inflate(R.layout.exercise_row, null)
         val exerciseEditText = exerciseLayout.findViewById<EditText>(R.id.exercise_name)
         val setsEditText = exerciseLayout.findViewById<EditText>(R.id.sets_input)
         val repsEditText = exerciseLayout.findViewById<EditText>(R.id.reps_input)
 
-        exercises.add(Exercise("", 0, 0)) // Placeholder entry
+        exercises.add(Exercise(0, 0, "", 0, 0, 0.0)) // Placeholder entry
 
         exerciseContainer.addView(exerciseLayout)
 
@@ -86,7 +82,7 @@ class AddWorkout : Fragment() {
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val index = exerciseContainer.indexOfChild(exerciseLayout)
-                exercises[index] = exercises[index].copy(name = s.toString())
+                exercises[index] = exercises[index].copy(exerciseName = s.toString()) // Update exercise name
             }
 
             override fun afterTextChanged(s: Editable?) {}
@@ -98,7 +94,7 @@ class AddWorkout : Fragment() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val index = exerciseContainer.indexOfChild(exerciseLayout)
                 val sets = s.toString().toIntOrNull() ?: 0 // default to 0
-                exercises[index] = exercises[index].copy(sets = sets)
+                exercises[index] = exercises[index].copy(sets = sets) // Update sets
             }
 
             override fun afterTextChanged(s: Editable?) {}
@@ -110,7 +106,7 @@ class AddWorkout : Fragment() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val index = exerciseContainer.indexOfChild(exerciseLayout)
                 val reps = s.toString().toIntOrNull() ?: 0
-                exercises[index] = exercises[index].copy(reps = reps)
+                exercises[index] = exercises[index].copy(reps = reps) // Update reps
             }
 
             override fun afterTextChanged(s: Editable?) {}
@@ -119,40 +115,15 @@ class AddWorkout : Fragment() {
 
     private fun saveWorkout() {
         val workoutName = workoutNameEditText.text.toString()
-        val formatter = SimpleDateFormat("dd/MM/yyyy HH:mm")
-        // val workoutDate = formatter.format(Calendar.getInstance().time)
 
-        val db = databaseHelper.writableDatabase
-        db.beginTransaction()
-
-        try {
-            // Insert the workout
-            val workoutQuery = "INSERT INTO Workout (workoutName) VALUES (?);"
-            val workoutStatement = db.compileStatement(workoutQuery)
-            workoutStatement.bindString(1, workoutName)
-            val workoutID = workoutStatement.executeInsert()
-
-            // Insert each exercise
-            for (exercise in exercises) {
-                val exerciseQuery = "INSERT INTO Exercise (workoutId, exerciseName, sets, reps) VALUES (?,?,?,?)"
-                val exerciseStatement = db.compileStatement(exerciseQuery)
-                exerciseStatement.bindLong(1, workoutID)
-                exerciseStatement.bindString(2, exercise.name)
-                exerciseStatement.bindLong(3, exercise.sets.toLong())
-                exerciseStatement.bindLong(4, exercise.reps.toLong())
-
-                exerciseStatement.executeInsert()
-            }
-
-            db.setTransactionSuccessful()
-
-            Toast.makeText(requireContext(), "Workout saved successfully!", Toast.LENGTH_SHORT).show()
-            parentFragmentManager.popBackStack()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        } finally {
-            db.endTransaction()
-            db.close()
+        if (workoutName.isEmpty()) { // Check the workout name isn't empty
+            Toast.makeText(requireContext(), "Workout name cannot be empty", Toast.LENGTH_SHORT).show()
+            return
         }
+
+        databaseHelper.insertWorkout(workoutName, exercises) // Insert workout into database
+
+        Toast.makeText(requireContext(), "Workout saved successfully!", Toast.LENGTH_SHORT).show()
+        parentFragmentManager.popBackStack() // Pop the current page off of the stack to go back
     }
 }

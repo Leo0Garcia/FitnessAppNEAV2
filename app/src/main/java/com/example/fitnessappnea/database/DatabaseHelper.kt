@@ -216,18 +216,18 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         val db = this.readableDatabase
         // Multi table query to fetch all data needed from both tables
         val cursor = db.rawQuery("""
-SELECT 
-    w.workoutId,
-    w.workoutName,
-    w.createdAt,
-    e.exerciseId,
-    e.exerciseName,
-    e.sets,
-    e.reps,
-    e.weight
-FROM Workout w
-LEFT JOIN Exercise e ON w.workoutId = e.workoutId -- Join exercises to the related workout
-ORDER BY w.workoutId, e.exerciseId; -- Order by workouts by workoutId and exercises by exerciseId
+        SELECT 
+            w.workoutId,
+            w.workoutName,
+            w.createdAt,
+            e.exerciseId,
+            e.exerciseName,
+            e.sets,
+            e.reps,
+            e.weight
+        FROM Workout w
+        LEFT JOIN Exercise e ON w.workoutId = e.workoutId -- Join exercises to the related workout
+        ORDER BY w.workoutId, e.exerciseId; -- Order by workouts by workoutId and exercises by exerciseId
 
         """.trimIndent(), null)
 
@@ -262,6 +262,49 @@ ORDER BY w.workoutId, e.exerciseId; -- Order by workouts by workoutId and exerci
 
         cursor.close()
         return workoutMap.values.toList()
+    }
+
+    fun insertWorkout(workoutName: String, exercises: List<Exercise>?) {
+        val db = this.writableDatabase
+        // Using a transaction to facillitate multiple queries instead of using multiple cursors
+        db.beginTransaction()
+        try {
+            // Insert the workout and get its ID to use for inserting exercises
+            val workoutQuery = "INSERT INTO Workout (workoutName) VALUES (?)"
+            val workoutID: Long = db.compileStatement(workoutQuery).use { stmt ->
+                stmt.bindString(1, workoutName)
+                stmt.executeInsert()
+            }
+
+            // Check if there are exercises to insert
+            if (exercises?.isNotEmpty() == true) {
+                val exerciseQuery = buildString { // Add multiple exercises to decrease the amount of queries
+                    append("INSERT INTO Exercise (workoutId, exerciseName, sets, reps) VALUES ")
+                    exercises.forEachIndexed { index, _ ->
+                        append("(?, ?, ?, ?)")
+                        if (index < exercises.size - 1) append(", ")
+                    }
+                }
+
+                val statement = db.compileStatement(exerciseQuery)
+                var bindIndex = 1
+
+                // Bind values for each exercises
+                for (exercise in exercises) {
+                    statement.bindLong(bindIndex++, workoutID)
+                    statement.bindString(bindIndex++, exercise.exerciseName)
+                    statement.bindLong(bindIndex++, exercise.sets.toLong())
+                    statement.bindLong(bindIndex++, exercise.reps.toLong())
+                }
+
+                statement.executeInsert()
+            }
+
+            db.setTransactionSuccessful()
+        }
+        finally {
+            db.endTransaction()
+        }
     }
 
     fun fetchAllCompletedWorkouts(): List<CompletedWorkout> {
@@ -365,15 +408,15 @@ ORDER BY w.workoutId, e.exerciseId; -- Order by workouts by workoutId and exerci
     fun getNutritionData(date: String): NutritionData {
         val db = this.readableDatabase
         val cursor = db.rawQuery("""SELECT date, 
-    SUM(protein) AS totalProtein, -- Sum up each macronutrient directly from all values in the table for that date
-    SUM(carbohydrates) AS totalCarbs,
-    SUM(fats) AS totalFats,
-    SUM(fibre) AS totalFibre,
-    SUM(calories) AS totalCalories
-FROM Nutrition 
-WHERE date = ?
-GROUP BY date;
-""".trimMargin(), arrayOf(date))
+            SUM(protein) AS totalProtein, -- Sum up each macronutrient directly from all values in the table for that date
+            SUM(carbohydrates) AS totalCarbs,
+            SUM(fats) AS totalFats,
+            SUM(fibre) AS totalFibre,
+            SUM(calories) AS totalCalories
+        FROM Nutrition 
+        WHERE date = ?
+        GROUP BY date;
+        """.trimMargin(), arrayOf(date))
 
         if (cursor.moveToFirst()) { // Extract sum data
             val protein = cursor.getDouble(cursor.getColumnIndexOrThrow("totalProtein"))
@@ -528,7 +571,5 @@ GROUP BY date;
             SQLStatement.bindLong(7, REMDuration)
             SQLStatement.execute()
         }
-
-
     }
 }

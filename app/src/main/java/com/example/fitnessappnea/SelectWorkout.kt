@@ -33,15 +33,16 @@ class SelectWorkout : Fragment() {
 
         databaseHelper = DatabaseHelper(requireContext(), null)
 
+        // Set back button to go back a page
         var backButton: Button = view.findViewById(R.id.back_to_workout_button)
         backButton.setOnClickListener {
-            parentFragmentManager.popBackStack()
+            parentFragmentManager.popBackStack() // Use the stack to pop the current fragment off to go back a page
         }
 
         // Fetch all workouts
         var workoutList = databaseHelper.getAllWorkouts()
 
-
+        // Create a list of workout names and ids for use when starting the workout
         var workouts = mutableListOf<Pair<Int, String>>()
         for (workout in workoutList) {
             workouts.add(Pair(workout.workoutId, workout.workoutName))
@@ -57,6 +58,8 @@ class SelectWorkout : Fragment() {
         // Create buttons for each workout
         for ((workoutId, workoutName) in workouts) {
             var button = Button(requireContext())
+
+            // Formatting for button
             button.text = workoutName
             button.background = resources.getDrawable(R.drawable.button_rounded)
             button.setTextColor(resources.getColor(R.color.colorAccent))
@@ -73,7 +76,7 @@ class SelectWorkout : Fragment() {
             button.setCompoundDrawablesWithIntrinsicBounds(null, null, arrowIcon, null)
             button.compoundDrawablePadding = 16
 
-            button.setOnClickListener {
+            button.setOnClickListener { // When button is clicked, start the workout selected
                 startWorkout(workoutId, workoutName, workoutList)
             }
             workoutButtons.add(button)
@@ -99,14 +102,11 @@ class SelectWorkout : Fragment() {
             putParcelableArrayList("workoutList", ArrayList(workoutList))
         }
 
-        // IN DOCUMENTATION TALK ABOUT HOW I HAD TO CHANGE THE CUSTOM DATA TYPES TO BE PARCELABLE
-
         fragment.arguments = bundle
 
         val transaction = parentFragmentManager.beginTransaction()
         transaction.replace(R.id.frame_layout, fragment)
         transaction.addToBackStack(null)
         transaction.commit()
-
     }
 }

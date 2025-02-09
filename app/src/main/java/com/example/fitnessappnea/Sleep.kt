@@ -13,6 +13,7 @@ import com.example.fitnessappnea.database.DatabaseHelper
 import com.example.fitnessappnea.database.SleepData
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.data.*
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -34,7 +35,7 @@ class Sleep : Fragment() {
         val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val data = databaseHelper.getSleepData(currentDate)
 //        if (data == null) {
-            showSleepTimeDialog()
+        showSleepTimeDialog()
 //        }
 
 
@@ -50,23 +51,25 @@ class Sleep : Fragment() {
         return view
     }
 
-
     private fun displayChart(chart: LineChart, data: List<SleepData>) {
         val sleepEntries = mutableListOf<Entry>()
         val wakeEntries = mutableListOf<Entry>()
         var index = 0
 
         for (item in data) {
-            val sleepTime = SimpleDateFormat("HH:mm", Locale.getDefault()).parse(item.sleepTime)
-            val wakeTime = SimpleDateFormat("HH:mm", Locale.getDefault()).parse(item.wakeTime)
+            val sleepParts = item.sleepTime.split(":").map { it.toInt() }
+            val wakeParts = item.wakeTime.split(":").map { it.toInt() }
 
-            if (sleepTime != null && wakeTime != null) {
-                println(sleepTime.time.toFloat())
-                println(wakeTime.time.toFloat())
-                sleepEntries.add(Entry(index.toFloat(), sleepTime.time.toFloat()))
-                wakeEntries.add(Entry(index.toFloat(), wakeTime.time.toFloat()))
-                index++
-            }
+            val sleepMinutes = sleepParts[0] * 60 + sleepParts[1]  // Convert HH:mm to total minutes
+            val wakeMinutes = wakeParts[0] * 60 + wakeParts[1]    // Convert HH:mm to total minutes
+
+            // Normalize times to the range 20:00 (0) - 10:00 (840 minutes)
+            val adjustedSleep = if (sleepMinutes >= 1200) sleepMinutes - 1200 else sleepMinutes + 240
+            val adjustedWake = if (wakeMinutes >= 1200) wakeMinutes - 1200 else wakeMinutes + 240
+
+            sleepEntries.add(Entry(index.toFloat(), adjustedSleep.toFloat()))
+            wakeEntries.add(Entry(index.toFloat(), adjustedWake.toFloat()))
+            index++
         }
 
         val sleepDataSet = LineDataSet(sleepEntries, "Sleep Time").apply {
@@ -82,43 +85,50 @@ class Sleep : Fragment() {
             mode = LineDataSet.Mode.CUBIC_BEZIER
         }
 
-        sleepDataSet.color = Color.BLUE
-        wakeDataSet.color = Color.GREEN
-
         val lineData = LineData(sleepDataSet, wakeDataSet).apply {
             setValueTextColor(Color.WHITE)
             setValueTextSize(12f)
         }
         chart.data = lineData
+
         chart.xAxis.position = XAxis.XAxisPosition.BOTTOM
         chart.axisRight.isEnabled = false
 
-        chart.apply {
-            xAxis.apply {
-                position = XAxis.XAxisPosition.BOTTOM
-                setDrawGridLines(false)
-                textColor = Color.DKGRAY
-                textSize = 12f
-                setDrawAxisLine(true)
-            }
-            axisLeft.apply {
-                setDrawGridLines(false)
-                textColor = Color.LTGRAY
-                textSize = 12f
-                setDrawAxisLine(true)
-            }
-
-            axisRight.isEnabled = false
-
-            legend.apply {
-                textColor = Color.DKGRAY
-                textSize = 12f
-
+        chart.axisLeft.valueFormatter = object : ValueFormatter() {
+            override fun getFormattedValue(value: Float): String {
+                val adjustedValue = (value.toInt() + 1200) % 1440 // Convert back to HH:mm
+                val hours = adjustedValue / 60
+                val minutes = adjustedValue % 60
+                return String.format("%02d:%02d", hours, minutes)
             }
         }
 
-        chart.invalidate()
+        chart.axisLeft.apply {
+            granularity = 60f  // 1-hour intervals
+//            axisMaximum = 840f  // 10:00 (bottom)
+//            axisMinimum = 0f    // 20:00 (top)
+//            labelCount = 14     // 14 labels from 20:00 to 10:00
+            setDrawGridLines(true)
+            textColor = Color.WHITE
+            textSize = 12f
+            isInverted = true
+        }
+
+        chart.xAxis.apply {
+            position = XAxis.XAxisPosition.BOTTOM
+            setDrawGridLines(false)
+            textColor = Color.LTGRAY
+            textSize = 12f
+        }
+
+        chart.legend.apply {
+            textColor = Color.WHITE
+            textSize = 12f
+        }
+
+        chart.invalidate() // Refresh chart
     }
+
 
     private fun showSleepTimeDialog() {
         val builder = AlertDialog.Builder(requireContext())

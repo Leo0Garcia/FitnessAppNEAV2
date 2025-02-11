@@ -249,15 +249,19 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
 
             // Check if there is an exercise linked to this workout for this entry in the results
             val exerciseId = cursor.getColumnIndex("exerciseId")
-            val exercise = Exercise(
-                exerciseId,
-                workoutId,
-                cursor.getString(cursor.getColumnIndexOrThrow("exerciseName")),
-                cursor.getInt(cursor.getColumnIndexOrThrow("sets")),
-                cursor.getInt(cursor.getColumnIndexOrThrow("reps")),
-                cursor.getDouble(cursor.getColumnIndexOrThrow("weight"))
-            )
-            workoutMap[workoutId]?.exercises?.add(exercise)
+            try {
+                val exercise = Exercise(
+                    exerciseId,
+                    workoutId,
+                    cursor.getString(cursor.getColumnIndexOrThrow("exerciseName")),
+                    cursor.getInt(cursor.getColumnIndexOrThrow("sets")),
+                    cursor.getInt(cursor.getColumnIndexOrThrow("reps")),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow("weight"))
+                )
+                workoutMap[workoutId]?.exercises?.add(exercise)
+            } catch (e: Exception) {
+                println(e)
+            }
         }
 
         cursor.close()

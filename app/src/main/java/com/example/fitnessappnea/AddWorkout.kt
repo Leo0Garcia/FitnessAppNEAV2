@@ -78,7 +78,7 @@ class AddWorkout : Fragment() {
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val index = exerciseContainer.indexOfChild(exerciseLayout)
-                exercises[index] = exercises[index].copy(exerciseName = s.toString()) // Update exercise name
+                exercises[index] = exercises[index].copy(exerciseName = s.toString().trim()) // Update exercise name
             }
 
             override fun afterTextChanged(s: Editable?) {}
@@ -115,6 +115,25 @@ class AddWorkout : Fragment() {
         if (workoutName.isEmpty()) { // Check the workout name isn't empty
             Toast.makeText(requireContext(), "Workout name cannot be empty", Toast.LENGTH_SHORT).show()
             return
+        }
+        if (workoutName.trim().isEmpty()) {
+            Toast.makeText(requireContext(), "Workout name cannot be empty", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        for (exercise in exercises) {
+            if (exercise.exerciseName.isEmpty()) { // Check exercise name isn't empty
+                Toast.makeText(requireContext(), "Exercise name cannot be empty", Toast.LENGTH_SHORT).show()
+                return
+            }
+            if (exercise.sets <= 0) { // Check sets isn't empty
+                Toast.makeText(requireContext(), "Sets cannot be empty or less than 0", Toast.LENGTH_SHORT).show()
+                return
+            }
+            if (exercise.reps <= 0) { // Check sets isn't empty
+                Toast.makeText(requireContext(), "Reps cannot be empty or less than 0", Toast.LENGTH_SHORT).show()
+                return
+            }
         }
 
         databaseHelper.insertWorkout(workoutName, exercises) // Insert workout into database

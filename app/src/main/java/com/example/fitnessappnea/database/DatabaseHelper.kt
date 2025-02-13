@@ -98,7 +98,8 @@ data class SleepData( // Data class for sleep data/avg data
     val sleepDuration: Int,
     val lightDuration: Int,
     val SWSDuration: Int,
-    val REMDuration: Int
+    val REMDuration: Int,
+    val date: String? = null
 )
 
 data class CompletedWorkout( // Data class for completed workouts
@@ -114,7 +115,7 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
 
     companion object {
         const val DATABASE_NAME = "FitnessData.db"
-        private const val DATABASE_VERSION = 20
+        private const val DATABASE_VERSION = 23
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
@@ -127,13 +128,13 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
 );"""
 
             val ExerciseQuery = """CREATE TABLE Exercise (
-    exerciseId INTEGER PRIMARY KEY AUTOINCREMENT,
-    workoutId INTEGER NOT NULL,
-    exerciseName TEXT NOT NULL CHECK(length(exerciseName) > 0),
-    sets INTEGER NOT NULL CHECK(sets > 0),
-    reps INTEGER NOT NULL CHECK(reps > 0),
-    weight REAL CHECK(weight >= 0),
-    FOREIGN KEY (workoutId) REFERENCES Workout(workoutId) ON DELETE CASCADE -- Delete child when parent is deleted
+    exerciseId INTEGER PRIMARY KEY AUTOINCREMENT, 
+    workoutId INTEGER NOT NULL, 
+    exerciseName TEXT NOT NULL CHECK(length(exerciseName) > 0), 
+    sets INTEGER NOT NULL CHECK(sets > 0), 
+    reps INTEGER NOT NULL CHECK(reps > 0), 
+    weight REAL DEFAULT 0 CHECK(weight >= 0), -- Set default weight to 0 instead of NULL
+    FOREIGN KEY (workoutId) REFERENCES Workout(workoutId) ON DELETE CASCADE
 );"""
 
             val CompletedWorkoutQuery = """CREATE TABLE CompletedWorkout (
@@ -214,59 +215,48 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
 
     fun getAllWorkouts(): List<Workout> {
         val db = this.readableDatabase
-        // Multi table query to fetch all data needed from both tables
-        val cursor = db.rawQuery("""
-        SELECT 
-            w.workoutId,
-            w.workoutName,
-            w.createdAt,
-            e.exerciseId,
-            e.exerciseName,
-            e.sets,
-            e.reps,
-            e.weight
-        FROM Workout w
-        LEFT JOIN Exercise e ON w.workoutId = e.workoutId -- Join exercises to the related workout
-        ORDER BY w.workoutId, e.exerciseId; -- Order by workouts by workoutId and exercises by exerciseId
 
-        """.trimIndent(), null)
+        // Get all workouts
+        val workoutCursor = db.rawQuery("SELECT workoutId, workoutName, createdAt FROM Workout ORDER BY workoutId", null)
 
-        val workoutMap = mutableMapOf<Int, Workout>() // Map to store workouts by ID without duplicates
+        val workoutList = mutableListOf<Workout>()
 
-        while (cursor.moveToNext()) { // Iterate through each query result
-            val workoutId = cursor.getInt(cursor.getColumnIndexOrThrow("workoutId"))
+        while (workoutCursor.moveToNext()) {
+            val workoutId = workoutCursor.getInt(workoutCursor.getColumnIndexOrThrow("workoutId"))
+            val workoutName = workoutCursor.getString(workoutCursor.getColumnIndexOrThrow("workoutName")) ?: "Unnamed Workout"
+            val createdAt = workoutCursor.getString(workoutCursor.getColumnIndexOrThrow("createdAt")) ?: ""
 
-            // If workout is not already added, create it
-            if (!workoutMap.containsKey(workoutId)) {
-                workoutMap[workoutId] = Workout(
-                    workoutId,
-                    cursor.getString(cursor.getColumnIndexOrThrow("workoutName")) ?: "Unnamed Workout",
-                    null.toString(),
-                    cursor.getString(cursor.getColumnIndexOrThrow("createdAt")) ?: "",
-                    mutableListOf()
-                )
+            // Fetch exercises for this workout
+            val exerciseCursor = db.rawQuery("SELECT exerciseId, exerciseName, sets, reps, weight FROM Exercise WHERE workoutId = ? ORDER BY exerciseId", arrayOf(workoutId.toString()))
+            val exercises = mutableListOf<Exercise>()
+
+            while (exerciseCursor.moveToNext()) { // Add exercises to the workout iteratively
+                try {
+                    val exercise = Exercise(
+                        exerciseCursor.getInt(exerciseCursor.getColumnIndexOrThrow("exerciseId")),
+                        workoutId,
+                        exerciseCursor.getString(exerciseCursor.getColumnIndexOrThrow("exerciseName")),
+                        exerciseCursor.getInt(exerciseCursor.getColumnIndexOrThrow("sets")),
+                        exerciseCursor.getInt(exerciseCursor.getColumnIndexOrThrow("reps")),
+                        exerciseCursor.getDouble(exerciseCursor.getColumnIndexOrThrow("weight"))
+                    )
+                    exercises.add(exercise)
+                } catch (e: Exception) {
+                    println("Error processing exercise: $e")
+                }
             }
+            exerciseCursor.close()
 
-            // Check if there is an exercise linked to this workout for this entry in the results
-            val exerciseId = cursor.getColumnIndex("exerciseId")
-            try {
-                val exercise = Exercise(
-                    exerciseId,
-                    workoutId,
-                    cursor.getString(cursor.getColumnIndexOrThrow("exerciseName")),
-                    cursor.getInt(cursor.getColumnIndexOrThrow("sets")),
-                    cursor.getInt(cursor.getColumnIndexOrThrow("reps")),
-                    cursor.getDouble(cursor.getColumnIndexOrThrow("weight"))
-                )
-                workoutMap[workoutId]?.exercises?.add(exercise)
-            } catch (e: Exception) {
-                println(e)
-            }
+            // Create Workout object for each workout with fetched exercises
+            workoutList.add(
+                Workout(workoutId, workoutName, null.toString(), createdAt, exercises)
+            )
         }
+        workoutCursor.close()
 
-        cursor.close()
-        return workoutMap.values.toList()
+        return workoutList
     }
+
 
     fun insertWorkout(workoutName: String, exercises: List<Exercise>?) {
         val db = this.writableDatabase
@@ -326,7 +316,7 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         JOIN Workout w ON cw.workoutId = w.workoutId
         LEFT JOIN CompletedExercise ce ON cw.completedId = ce.completedId -- Join completed exercises to the related workout
         LEFT JOIN Exercise e ON ce.exerciseId = e.exerciseId -- Join exercises to the related workout
-        GROUP BY cw.completedId, w.workoutName
+        GROUP BY cw.completedId, w.workoutName;
     """
 
         val cursor = db.rawQuery(query, null)
@@ -339,6 +329,7 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
                 val exercisesData = cursor.getString(cursor.getColumnIndexOrThrow("exercises"))
 
                 val exercises = mutableListOf<Exercise>()
+                println(exercisesData)
 
                 // Parse exercises from the GROUP_CONCAT result
                 exercisesData?.split(",")?.forEach { exerciseInfo ->
@@ -349,6 +340,7 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
                         val setsCompleted = parts[2].toInt()
                         val repsCompleted = parts[3].toInt()
                         val weightUsed = parts[4].toDouble()
+                        println(exerciseName)
 
                         // Create an Exercise object and add it to the list
                         exercises.add(Exercise(exerciseId, 0, exerciseName, setsCompleted, repsCompleted, weightUsed))
@@ -365,7 +357,7 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
     fun saveCompletedWorkout(completedExercises: MutableList<Exercise>) {
         val db = this.writableDatabase
 
-        val SQLQuery = "INSERT INTO CompletedWorkout (workoutId)VALUES (?)"
+        val SQLQuery = "INSERT INTO CompletedWorkout (workoutId) VALUES (?)"
         val SQLStatement = db.compileStatement(SQLQuery)
         SQLStatement.bindLong(1, completedExercises[0].workoutId.toLong())
 
@@ -382,10 +374,16 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
             val SQLQueryExercise = "INSERT INTO CompletedExercise (completedId, exerciseId, setsCompleted, repsCompleted, weightUsed) VALUES (?, ?, ?, ?, ?)"
             val SQLStatementExercise = db.compileStatement(SQLQueryExercise)
             SQLStatementExercise.bindLong(1, completedId) // Use the retrieved CompletedId
+            println(completedId)
             SQLStatementExercise.bindLong(2, exercise.exerciseId.toLong())
+            println(exercise.exerciseId)
             SQLStatementExercise.bindLong(3, exercise.sets.toLong())
+            println(exercise.sets)
             SQLStatementExercise.bindLong(4, exercise.reps.toLong())
+            println(exercise.reps)
             SQLStatementExercise.bindDouble(5, exercise.weight)
+            println(exercise.weight)
+            println(SQLStatementExercise)
             SQLStatementExercise.execute()
         }
     }
@@ -506,7 +504,8 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
                 cursor.getInt(cursor.getColumnIndexOrThrow("sleepDuration")),
                 cursor.getInt(cursor.getColumnIndexOrThrow("lightDuration")),
                 cursor.getInt(cursor.getColumnIndexOrThrow("SWSDuration")),
-                cursor.getInt(cursor.getColumnIndexOrThrow("REMDuration"))
+                cursor.getInt(cursor.getColumnIndexOrThrow("REMDuration")),
+                cursor.getString(cursor.getColumnIndexOrThrow("date"))
             )
             sleepDataList.add(sleepData)
         }
@@ -514,39 +513,38 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         return sleepDataList
     }
 
-    fun getAvgSleepData(date: String): SleepData? {
+    fun getAllSleepData(): List<SleepData> {
         val db = this.readableDatabase
-        // Fetch average sleep data for a given date
+        // Fetch sleep data for the last 7 days
         val cursor = db.rawQuery("""
-            SELECT AVG(sleepDuration) AS avgSleep FROM Sleep -- Calculate average sleep duration for past 30 days
-            WHERE date >= DATE('now', '-30 days');
-        """.trimIndent(), arrayOf(date))
-
-        cursor.moveToFirst()
-        if (cursor.count == 0) {
-            return null
+            SELECT * FROM Sleep;
+        """.trimIndent(), arrayOf())
+        val sleepDataList = mutableListOf<SleepData>()
+        while (cursor.moveToNext()) {
+            val sleepData = SleepData(
+                cursor.getString(cursor.getColumnIndexOrThrow("wakeTime")),
+                cursor.getString(cursor.getColumnIndexOrThrow("sleepTime")),
+                cursor.getInt(cursor.getColumnIndexOrThrow("sleepDuration")),
+                cursor.getInt(cursor.getColumnIndexOrThrow("lightDuration")),
+                cursor.getInt(cursor.getColumnIndexOrThrow("SWSDuration")),
+                cursor.getInt(cursor.getColumnIndexOrThrow("REMDuration")),
+                cursor.getString(cursor.getColumnIndexOrThrow("date"))
+            )
+            sleepDataList.add(sleepData)
         }
-        val sleepData = SleepData(
-            "",
-            "",
-            cursor.getInt(cursor.getColumnIndexOrThrow("avgSleep")),
-            0,
-            0,
-            0
-        )
         cursor.close()
-        return sleepData
+        return sleepDataList
     }
 
-    fun saveSleepData(date: String? = null, sleepTime: String, wakeTime: String, sleepDuration: Int) {
+    fun saveSleepData(date: String? = null, sleepTime: String, wakeTime: String, sleepDuration: Double) {
         // 55% Light sleep
         // 20% SWS sleep
         // 25% REM Sleep
 
         // Calculate duration of sleep stages
-        val lightDuration = (sleepDuration * 0.55).toLong()
-        val SWSDuration = (sleepDuration * 0.20).toLong()
-        val REMDuration = (sleepDuration * 0.25).toLong()
+        val lightDuration: Double = (sleepDuration * 0.55)
+        val SWSDuration: Double = (sleepDuration * 0.20)
+        val REMDuration: Double = (sleepDuration * 0.25)
 
         val db = this.writableDatabase
         // Insert all data (will be saved with the current date as default)
@@ -557,10 +555,10 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
 
             SQLStatement.bindString(1, wakeTime)
             SQLStatement.bindString(2, sleepTime)
-            SQLStatement.bindLong(3, sleepDuration.toLong())
-            SQLStatement.bindLong(4, lightDuration)
-            SQLStatement.bindLong(5, SWSDuration)
-            SQLStatement.bindLong(6, REMDuration)
+            SQLStatement.bindDouble(3, sleepDuration)
+            SQLStatement.bindDouble(4, lightDuration)
+            SQLStatement.bindDouble(5, SWSDuration)
+            SQLStatement.bindDouble(6, REMDuration)
             SQLStatement.execute()
         } else {
             SQLQuery = "INSERT INTO Sleep (date, wakeTime, sleepTime, sleepDuration, lightDuration, SWSDuration, REMDuration) VALUES (?, ?, ?, ?, ?, ?, ?)"
@@ -569,10 +567,10 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
             SQLStatement.bindString(1, date)
             SQLStatement.bindString(2, wakeTime)
             SQLStatement.bindString(3, sleepTime)
-            SQLStatement.bindLong(4, sleepDuration.toLong())
-            SQLStatement.bindLong(5, lightDuration)
-            SQLStatement.bindLong(6, SWSDuration)
-            SQLStatement.bindLong(7, REMDuration)
+            SQLStatement.bindDouble(4, sleepDuration)
+            SQLStatement.bindDouble(5, lightDuration)
+            SQLStatement.bindDouble(6, SWSDuration)
+            SQLStatement.bindDouble(7, REMDuration)
             SQLStatement.execute()
         }
     }

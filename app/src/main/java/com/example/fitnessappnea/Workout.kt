@@ -92,11 +92,11 @@ class Workout : Fragment() {
 
         workoutView.findViewById<TextView>(R.id.workout_name).text = name
 
-
         val exerciseContainer = workoutView.findViewById<LinearLayout>(R.id.exercise_container)
         exerciseContainer.removeAllViews()
         // Iterate through each exercise and add it to the exercise container
         for (exercise in exercises) {
+            println(exercise.exerciseName)
             val exerciseTextView = TextView(exerciseContainer.context).apply {
                 this.text = "${exercise.sets}x ${exercise.exerciseName}"
                 this.layoutParams = LinearLayout.LayoutParams(

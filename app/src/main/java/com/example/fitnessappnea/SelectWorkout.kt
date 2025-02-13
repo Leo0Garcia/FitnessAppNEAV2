@@ -41,6 +41,8 @@ class SelectWorkout : Fragment() {
 
         // Fetch all workouts
         var workoutList = databaseHelper.getAllWorkouts()
+        println(workoutList)
+        println("list")
 
         // Create a list of workout names and ids for use when starting the workout
         var workouts = mutableListOf<Pair<Int, String>>()

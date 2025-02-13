@@ -16,8 +16,6 @@ class StartWorkout : Fragment() {
 
     // Declare variables
     private lateinit var databaseHelper: DatabaseHelper
-    private lateinit var exercises: List<Exercise>
-    private val completedExercises = mutableListOf<Exercise>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -34,20 +32,22 @@ class StartWorkout : Fragment() {
         val workoutNameTextView = view.findViewById<TextView>(R.id.workout_name_view)
         workoutNameTextView.text = workoutName
 
-
+        var exercises: List<Exercise>
         exercises = workoutList.find { it.workoutId == workoutId }?.exercises ?: emptyList()
+        println(exercises)
+        println("here")
         // Populate exercise list
-        populateExercises(view)
+        populateExercises(view, exercises)
 
         val finishButton = view.findViewById<Button>(R.id.finish_workout_button)
         finishButton.setOnClickListener {
-            finishWorkout(workoutId)
+            finishWorkout(workoutId, exercises)
         }
 
         return view
     }
 
-    private fun populateExercises(view: View) {
+    private fun populateExercises(view: View, exercises: List<Exercise>) {
         val exerciseContainer = view.findViewById<LinearLayout>(R.id.exerciseContainer)
 
         // Iterate through exercises and add them to the exercise container
@@ -250,10 +250,12 @@ class StartWorkout : Fragment() {
         }
     }
 
-    private fun finishWorkout(workoutId: Int) {
+    private fun finishWorkout(workoutId: Int, exercises: List<Exercise>) {
+        var completedExercises = mutableListOf<Exercise>()
         // Collect completed exercise data
         val parentLayout = view?.findViewById<LinearLayout>(R.id.exerciseContainer) ?: return
         for (exercise in exercises) {
+            println(exercise.exerciseName)
             val completedExercise = Exercise(
                 exerciseId = exercise.exerciseId,
                 exerciseName = exercise.exerciseName,
@@ -282,6 +284,14 @@ class StartWorkout : Fragment() {
             completedExercise.weight = totalWeight
             completedExercises.add(completedExercise)
         }
+
+        // Verify that at least one set is completed
+        if (completedExercises.none { it.reps > 0 }) {
+            Toast.makeText(requireContext(), "No sets completed", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        println(completedExercises)
 
         // Save completed workout to the database
         databaseHelper.saveCompletedWorkout(completedExercises)

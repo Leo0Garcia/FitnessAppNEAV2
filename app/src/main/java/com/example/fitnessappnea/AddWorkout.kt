@@ -130,7 +130,7 @@ class AddWorkout : Fragment() {
                 Toast.makeText(requireContext(), "Sets cannot be empty or less than 0", Toast.LENGTH_SHORT).show()
                 return
             }
-            if (exercise.reps <= 0) { // Check sets isn't empty
+            if (exercise.reps <= 0) { // Check reps isn't empty
                 Toast.makeText(requireContext(), "Reps cannot be empty or less than 0", Toast.LENGTH_SHORT).show()
                 return
             }

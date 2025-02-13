@@ -24,7 +24,7 @@ import java.util.Locale
 // Define classes for json parsing
 data class Food(
     val food_name: String,
-    val serving_qty: Int,
+    val serving_qty: Float,
     val serving_unit: String,
     val nf_calories: Double,
     val nf_total_fat: Double,

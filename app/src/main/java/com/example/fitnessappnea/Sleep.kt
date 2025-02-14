@@ -66,9 +66,9 @@ class Sleep : Fragment() {
         displayChart(chart, weekData, view)
         addSleepHistory(view)
 
-        if (data == null) {
+//        if (data == null) {
             showSleepTimeDialog(view)
-        }
+//        }
 
         return view
     }

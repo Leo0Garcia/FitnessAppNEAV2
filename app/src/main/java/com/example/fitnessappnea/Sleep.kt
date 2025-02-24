@@ -12,14 +12,12 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import com.example.fitnessappnea.database.CompletedWorkout
 import com.example.fitnessappnea.database.DatabaseHelper
 import com.example.fitnessappnea.database.SleepData
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.data.*
-import okhttp3.internal.wait
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -298,31 +296,35 @@ class Sleep : Fragment() {
     private fun showSleepTimeDialog(view: View) {
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("Enter Sleep & Wake Time")
-
         builder.setMessage("Please select your sleep and wake time.")
 
         builder.setPositiveButton("Set Time") { _, _ ->
             showTimePicker("Select Sleep Time") { sleepHour, sleepMinute ->
                 showTimePicker("Select Wake Time") { wakeHour, wakeMinute ->
-                    // Verify wake time not before sleep time
-                    if (wakeHour < sleepHour || (wakeHour == sleepHour && wakeMinute < sleepMinute)) {
-                        Toast.makeText(requireContext(), "Wake time must be after sleep time", Toast.LENGTH_LONG).show()
+                    // Convert both times to minutes since midnight
+                    val sleepMinutes = sleepHour * 60 + sleepMinute
+                    val wakeMinutesRaw = wakeHour * 60 + wakeMinute
+
+                    // Prevent the user from choosing the same time
+                    if (sleepMinutes == wakeMinutesRaw) {
+                        Toast.makeText(requireContext(), "Sleep and wake times cannot be the same", Toast.LENGTH_LONG).show()
                         showSleepTimeDialog(view)
                         return@showTimePicker
                     }
 
-
-                    val sleepTime = String.format("%02d:%02d", sleepHour, sleepMinute)
-                    val wakeTime = String.format("%02d:%02d", wakeHour, wakeMinute)
-
-                    val sleepMinutes = sleepHour * 60 + sleepMinute
-                    var wakeMinutes = wakeHour * 60 + wakeMinute
-
-                    if (wakeMinutes < sleepMinutes) {
-                        wakeMinutes += 24 * 60
+                    // Adjust wake time if it occurs on the next day
+                    val wakeMinutes = if (wakeMinutesRaw < sleepMinutes) {
+                        wakeMinutesRaw + 24 * 60
+                    } else {
+                        wakeMinutesRaw
                     }
 
+                    // Calculate sleep duration
                     val sleepDuration = wakeMinutes - sleepMinutes
+
+                    // Format times for display/storage
+                    val sleepTime = String.format("%02d:%02d", sleepHour, sleepMinute)
+                    val wakeTime = String.format("%02d:%02d", wakeHour, wakeMinute)
                     val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
                     Toast.makeText(requireContext(), "Sleep: $sleepTime, Wake: $wakeTime", Toast.LENGTH_LONG).show()
@@ -343,6 +345,7 @@ class Sleep : Fragment() {
 
         builder.show()
     }
+
 
 
     private fun linearRegression(x: List<Double>, y: List<Double>): Pair<Double, Double> {

@@ -141,7 +141,7 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
     completedId INTEGER PRIMARY KEY AUTOINCREMENT,
     workoutId INTEGER NOT NULL,
     completionDate DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (workoutId) REFERENCES Workout(workoutId) ON DELETE CASCADE
+    FOREIGN KEY (workoutId) REFERENCES Workout(workoutId)
 );"""
 
             val CompletedExerciseQuery = """CREATE TABLE CompletedExercise (
@@ -549,29 +549,33 @@ class DatabaseHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         val db = this.writableDatabase
         // Insert all data (will be saved with the current date as default)
         val SQLQuery: String
-        if (date == null) {
-            SQLQuery = "INSERT INTO Sleep (wakeTime, sleepTime, sleepDuration, lightDuration, SWSDuration, REMDuration) VALUES (?, ?, ?, ?, ?, ?)"
-            val SQLStatement = db.compileStatement(SQLQuery)
+        try {
+            if (date == null) {
+                SQLQuery = "INSERT INTO Sleep (wakeTime, sleepTime, sleepDuration, lightDuration, SWSDuration, REMDuration) VALUES (?, ?, ?, ?, ?, ?)"
+                val SQLStatement = db.compileStatement(SQLQuery)
 
-            SQLStatement.bindString(1, wakeTime)
-            SQLStatement.bindString(2, sleepTime)
-            SQLStatement.bindDouble(3, sleepDuration)
-            SQLStatement.bindDouble(4, lightDuration)
-            SQLStatement.bindDouble(5, SWSDuration)
-            SQLStatement.bindDouble(6, REMDuration)
-            SQLStatement.execute()
-        } else {
-            SQLQuery = "INSERT INTO Sleep (date, wakeTime, sleepTime, sleepDuration, lightDuration, SWSDuration, REMDuration) VALUES (?, ?, ?, ?, ?, ?, ?)"
-            val SQLStatement = db.compileStatement(SQLQuery)
+                SQLStatement.bindString(1, wakeTime)
+                SQLStatement.bindString(2, sleepTime)
+                SQLStatement.bindDouble(3, sleepDuration.toDouble())
+                SQLStatement.bindDouble(4, lightDuration)
+                SQLStatement.bindDouble(5, SWSDuration)
+                SQLStatement.bindDouble(6, REMDuration)
+                SQLStatement.execute()
+            } else {
+                SQLQuery = "INSERT INTO Sleep (date, wakeTime, sleepTime, sleepDuration, lightDuration, SWSDuration, REMDuration) VALUES (?, ?, ?, ?, ?, ?, ?)"
+                val SQLStatement = db.compileStatement(SQLQuery)
 
-            SQLStatement.bindString(1, date)
-            SQLStatement.bindString(2, wakeTime)
-            SQLStatement.bindString(3, sleepTime)
-            SQLStatement.bindDouble(4, sleepDuration)
-            SQLStatement.bindDouble(5, lightDuration)
-            SQLStatement.bindDouble(6, SWSDuration)
-            SQLStatement.bindDouble(7, REMDuration)
-            SQLStatement.execute()
+                SQLStatement.bindString(1, date)
+                SQLStatement.bindString(2, wakeTime)
+                SQLStatement.bindString(3, sleepTime)
+                SQLStatement.bindDouble(4, sleepDuration.toDouble())
+                SQLStatement.bindDouble(5, lightDuration)
+                SQLStatement.bindDouble(6, SWSDuration)
+                SQLStatement.bindDouble(7, REMDuration)
+                SQLStatement.execute()
+            }
+        } catch (e: Exception) {
+            println(e)
         }
     }
 }

@@ -228,14 +228,14 @@ class DatabaseTests {
         val testDate = "2025-02-06"
         val sleepTime = "23:00"
         val wakeTime = "07:00"
-        val sleepDuration = 480
+        val sleepDuration: Int = 480
 
         // Save test data into database
         val saveResult = databaseHelper.saveSleepData(
             date = testDate,
             sleepTime = sleepTime,
             wakeTime = wakeTime,
-            sleepDuration = sleepDuration
+            sleepDuration = sleepDuration.toDouble()
         )
         assertNotNull("Failed to save sleep data", saveResult)
 
